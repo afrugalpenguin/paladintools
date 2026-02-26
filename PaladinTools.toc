@@ -1,0 +1,17 @@
+## Interface: 20505
+## Title: PaladinTools
+## Notes: Paladin utility addon — blessings, auras, seals, buff tracking
+## Author: FrugalPenguin
+## Version: @project-version@
+## SavedVariablesPerCharacter: PaladinToolsDB
+## OptionalDeps: Masque
+
+Core.lua
+WhatsNew.lua
+Options.lua
+Tour.lua
+Data.lua
+MasqueHelper.lua
+PopupMenu.lua
+BuffManager.lua
+TradeHelper.lua
