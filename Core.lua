@@ -134,9 +134,6 @@ SlashCmdList["PALADINTOOLS"] = function(msg)
         print("  HUD visible: " .. tostring(PaladinToolsDB.hudVisible))
         print("  Auto-reply: " .. tostring(PaladinToolsDB.autoReply))
         print("  Keywords: " .. table.concat(PaladinToolsDB.whisperKeywords, ", "))
-    elseif cmd == "tour" then
-        local tour = PaladinTools.modules["Tour"]
-        if tour then tour:Start() end
     else
         local wn = PaladinTools.modules["WhatsNew"]
         if wn and wn:ShouldShow() then
@@ -150,7 +147,6 @@ SlashCmdList["PALADINTOOLS"] = function(msg)
             print("  /pt options - Open options panel")
             print("  /pt whatsnew - View changelog")
             print("  /pt config - Show config")
-            print("  /pt tour - Start onboarding tour")
         end
     end
 end

@@ -71,8 +71,6 @@ read_globals = {
     "PaladinToolsHUD",
     "PaladinToolsPopup",
     "PaladinToolsOptions",
-    "PaladinToolsTour",
-    "PaladinToolsTourWelcome",
     "PaladinToolsBlessingSession",
 
     -- Lua globals (WoW extensions)
