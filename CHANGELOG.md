@@ -7,4 +7,3 @@
 - Blessing session panel for group buff tracking
 - Tabbed options panel
 - Masque skin support
-- Onboarding tour

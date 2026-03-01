@@ -54,7 +54,9 @@ PT.SYMBOL_OF_DIVINITY = 17033 -- Symbol of Divinity (Divine Intervention)
 -- Reagent tracking set for bag scanning
 PT.REAGENT_ITEM_SET = {}
 PT.REAGENT_ITEM_SET[PT.SYMBOL_OF_KINGS] = "symbolOfKings"
+PT.REAGENT_ITEM_SET[PT.SYMBOL_OF_DIVINITY] = "symbolOfDivinity"
 
 -- Build a lookup for all tracked items
 PT.TRACKED_ITEM_SET = {}
 PT.TRACKED_ITEM_SET[PT.SYMBOL_OF_KINGS] = "symbolOfKings"
+PT.TRACKED_ITEM_SET[PT.SYMBOL_OF_DIVINITY] = "symbolOfDivinity"
