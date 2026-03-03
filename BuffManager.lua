@@ -4,8 +4,8 @@ PT:RegisterModule("BuffManager", BM)
 
 local hudFrame = nil
 local sessionFrame = nil
-local counts = { symbolOfKings = 0 }
-local foundItem = { symbolOfKings = nil }
+local counts = { symbolOfKings = 0, symbolOfDivinity = 0 }
+local foundItem = { symbolOfKings = nil, symbolOfDivinity = nil }
 local hudButtons = {}
 
 function BM:Init()
@@ -24,7 +24,9 @@ end
 -- Bag scanning
 function BM:ScanBags()
     counts.symbolOfKings = 0
+    counts.symbolOfDivinity = 0
     foundItem.symbolOfKings = nil
+    foundItem.symbolOfDivinity = nil
     for bag = 0, NUM_BAG_SLOTS do
         local numSlots = C_Container.GetContainerNumSlots(bag)
         for slot = 1, numSlots do
