@@ -6,6 +6,13 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "1.0.0",
+        features = {
+            "Onboarding tour: /pt tour walks through addon features",
+        },
+        fixes = {},
+    },
+    {
         version = "0.1.0",
         features = {
             "Initial release: blessings, auras, seals popup menu",

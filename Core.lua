@@ -1,6 +1,6 @@
 PaladinTools = {}
 PaladinTools.modules = {}
-PaladinTools.version = "0.1.0"
+PaladinTools.version = "1.0.0"
 PaladinTools.initialized = false
 
 -- Make a child frame propagate drag events to its movable parent

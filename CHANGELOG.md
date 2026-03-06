@@ -1,6 +1,10 @@
 # Changelog
 
-## v0.1.0
+**v1.0.0**
+- New: Onboarding tour — `/pt tour` walks through addon features
+- Removed: "Show Blessing Session on Login" setting (replaced by tour)
+
+**v0.1.0**
 - Initial release: blessings, auras, seals popup menu
 - Reagent tracking HUD (Symbol of Kings)
 - Buff request whisper queue with auto-reply
