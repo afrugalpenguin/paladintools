@@ -6,6 +6,14 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "1.0.1",
+        features = {},
+        fixes = {
+            "Fixed inaccurate HUD and Blessing Session descriptions",
+            "Renamed Trade Helper to Buff Helper",
+        },
+    },
+    {
         version = "1.0.0",
         features = {
             "Onboarding tour: /pt tour walks through addon features",
