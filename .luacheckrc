@@ -72,6 +72,8 @@ read_globals = {
     "PaladinToolsPopup",
     "PaladinToolsOptions",
     "PaladinToolsBlessingSession",
+    "PaladinToolsTourWelcome",
+    "PaladinToolsTour",
 
     -- Lua globals (WoW extensions)
     "strsplit",

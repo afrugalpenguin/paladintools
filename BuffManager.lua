@@ -299,12 +299,6 @@ end
 function BM:OnEvent(event, ...)
     if event == "BAG_UPDATE" or event == "BAG_UPDATE_DELAYED" then
         self:ScanBags()
-    elseif event == "PLAYER_ENTERING_WORLD" then
-        local isInitialLogin = ...
-        if isInitialLogin and PaladinToolsDB.showSessionOnLogin then
-            self:UpdateSessionProgress()
-            sessionFrame:Show()
-        end
     elseif event == "PLAYER_REGEN_DISABLED" then
         if PaladinToolsDB.hudHideInCombat and PaladinToolsDB.hudVisible and hudFrame then
             hudFrame:Hide()

@@ -327,10 +327,6 @@ local function BuildGeneralContent(parent)
         if bm and bm.RebuildHUD then bm:RebuildHUD() end
     end)
 
-    -- Blessing Session section
-    y = CreateHeader(parent, "Blessing Session", y - 6)
-    y = CreateCheckbox(parent, "Show Blessing Session on Login", "showSessionOnLogin", y)
-
     -- Popup Menu section
     y = CreateHeader(parent, "Popup Menu", y - 6)
 

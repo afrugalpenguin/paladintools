@@ -35,7 +35,6 @@ local defaults = {
     popupButtonSize = 36,
     maxQueueDisplay = 10,
     sessionBgAlpha = 0.9,
-    showSessionOnLogin = false,
     popupKeybind = nil,
     hudShowReagents = true,
     hudHideInCombat = false,
@@ -123,6 +122,9 @@ SlashCmdList["PALADINTOOLS"] = function(msg)
     elseif cmd == "queue" then
         local th = PaladinTools.modules["TradeHelper"]
         if th then th:ToggleQueue() end
+    elseif cmd == "tour" then
+        local tour = PaladinTools.modules["Tour"]
+        if tour then tour:Start() end
     elseif cmd == "whatsnew" then
         local wn = PaladinTools.modules["WhatsNew"]
         if wn then wn:Show() end
@@ -145,6 +147,7 @@ SlashCmdList["PALADINTOOLS"] = function(msg)
             print("  /pt session - Blessing session")
             print("  /pt queue - Toggle buff queue")
             print("  /pt options - Open options panel")
+            print("  /pt tour - Start onboarding tour")
             print("  /pt whatsnew - View changelog")
             print("  /pt config - Show config")
         end
