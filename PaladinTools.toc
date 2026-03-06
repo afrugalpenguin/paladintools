@@ -5,6 +5,7 @@
 ## Version: @project-version@
 ## SavedVariablesPerCharacter: PaladinToolsDB
 ## OptionalDeps: Masque
+## X-Curse-Project-ID: 1479279
 
 Core.lua
 WhatsNew.lua

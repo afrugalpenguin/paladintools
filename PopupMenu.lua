@@ -260,21 +260,23 @@ function PM:BuildButtons()
     local cats = PaladinToolsDB.popupCategories
     local playerFaction = UnitFactionGroup("player")
 
-    -- Blessings (single-target)
+    -- Blessings (greater replaces lesser when known)
+    local greaterByType = {}
+    for _, spell in ipairs(PT.GREATER_BLESSINGS) do
+        greaterByType[spell.type] = spell
+    end
+
     local blessingSpells = {}
     if cats.blessings then
         for _, spell in ipairs(PT.BLESSINGS) do
-            local id = FindSpellInBook(spell.name)
-            if id then tinsert(blessingSpells, { spellID = id }) end
-        end
-    end
-
-    -- Greater Blessings
-    local greaterSpells = {}
-    if cats.greaterBlessings then
-        for _, spell in ipairs(PT.GREATER_BLESSINGS) do
-            local id = FindSpellInBook(spell.name)
-            if id then tinsert(greaterSpells, { spellID = id }) end
+            local greater = greaterByType[spell.type]
+            local greaterId = greater and FindSpellInBook(greater.name)
+            if greaterId then
+                tinsert(blessingSpells, { spellID = greaterId })
+            else
+                local id = FindSpellInBook(spell.name)
+                if id then tinsert(blessingSpells, { spellID = id }) end
+            end
         end
     end
 
@@ -298,13 +300,11 @@ function PM:BuildButtons()
         end
     end
 
-    -- X layout: four blocks around cursor center
-    -- TL = blessings, TR = greater blessings, BL = auras, BR = seals
-    local quadrants = {
-        { spells = blessingSpells, prefix = "Blessing", label = "Blessings" },
-        { spells = greaterSpells,  prefix = "Greater",  label = "Greater" },
-        { spells = auraSpells,     prefix = "Aura",     label = "Auras" },
-        { spells = sealSpells,     prefix = "Seal",     label = "Seals" },
+    -- Inverted triangle layout: blessings top-center, auras bottom-left, seals bottom-right
+    local groups = {
+        { spells = blessingSpells, prefix = "Blessing", label = "Blessings", pos = "top" },
+        { spells = auraSpells,     prefix = "Aura",     label = "Auras",     pos = "bottomleft" },
+        { spells = sealSpells,     prefix = "Seal",     label = "Seals",     pos = "bottomright" },
     }
 
     local btnSize = PaladinToolsDB.popupButtonSize
@@ -314,30 +314,28 @@ function PM:BuildButtons()
 
     local LABEL_GAP = 2
 
-    for qIdx, q in ipairs(quadrants) do
-        if #q.spells > 0 then
-            local cols = math.min(#q.spells, BLOCK_COLS)
-            local rows = math.ceil(#q.spells / BLOCK_COLS)
+    for _, g in ipairs(groups) do
+        if #g.spells > 0 then
+            local cols = math.min(#g.spells, BLOCK_COLS)
+            local rows = math.ceil(#g.spells / BLOCK_COLS)
             local blockW = cols * spacing
             local blockH = rows * spacing
 
             local col = 0
             local row = 0
-            for i, spell in ipairs(q.spells) do
-                local btn = CreateSpellButton(spell, q.prefix, i)
+            for i, spell in ipairs(g.spells) do
+                local btn = CreateSpellButton(spell, g.prefix, i)
 
                 local bx, by
-                if qIdx == 1 then       -- top-left
-                    bx = -BLOCK_GAP - blockW + col * spacing + btnSize / 2
-                    by =  BLOCK_GAP + blockH - row * spacing - btnSize / 2
-                elseif qIdx == 2 then   -- top-right
-                    bx =  BLOCK_GAP + col * spacing + btnSize / 2
-                    by =  BLOCK_GAP + blockH - row * spacing - btnSize / 2
-                elseif qIdx == 3 then   -- bottom-left
+                if g.pos == "top" then
+                    -- Centered horizontally, above cursor
+                    bx = -blockW / 2 + col * spacing + btnSize / 2
+                    by = BLOCK_GAP + blockH - row * spacing - btnSize / 2
+                elseif g.pos == "bottomleft" then
                     bx = -BLOCK_GAP - blockW + col * spacing + btnSize / 2
                     by = -BLOCK_GAP - row * spacing - btnSize / 2
-                else                    -- bottom-right
-                    bx =  BLOCK_GAP + col * spacing + btnSize / 2
+                else -- bottomright
+                    bx = BLOCK_GAP + col * spacing + btnSize / 2
                     by = -BLOCK_GAP - row * spacing - btnSize / 2
                 end
 
@@ -356,16 +354,14 @@ function PM:BuildButtons()
                 end
             end
 
-            -- Quadrant label
+            -- Group label
             local lbl = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            lbl:SetText(q.label)
+            lbl:SetText(g.label)
             lbl:SetTextColor(0.96, 0.55, 0.73, 0.8)  -- Paladin pink
 
-            if qIdx == 1 then
-                lbl:SetPoint("BOTTOMRIGHT", popup, "CENTER", -BLOCK_GAP, BLOCK_GAP + blockH + LABEL_GAP)
-            elseif qIdx == 2 then
-                lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", BLOCK_GAP, BLOCK_GAP + blockH + LABEL_GAP)
-            elseif qIdx == 3 then
+            if g.pos == "top" then
+                lbl:SetPoint("BOTTOM", popup, "CENTER", 0, BLOCK_GAP + blockH + LABEL_GAP)
+            elseif g.pos == "bottomleft" then
                 lbl:SetPoint("TOPRIGHT", popup, "CENTER", -BLOCK_GAP, -BLOCK_GAP - blockH - LABEL_GAP)
             else
                 lbl:SetPoint("TOPLEFT", popup, "CENTER", BLOCK_GAP, -BLOCK_GAP - blockH - LABEL_GAP)

@@ -40,7 +40,7 @@ local defaults = {
     hudShowReagents = true,
     hudHideInCombat = false,
     popupReleaseMode = true,
-    popupCategories = { blessings = true, greaterBlessings = true, auras = true, seals = true },
+    popupCategories = { blessings = true, auras = true, seals = true },
 }
 
 function PaladinTools:RegisterModule(name, mod)

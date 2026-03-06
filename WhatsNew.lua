@@ -14,7 +14,6 @@ local changelog = {
             "Blessing session panel",
             "Tabbed options panel",
             "Masque support",
-            "Onboarding tour",
         },
         fixes = {},
     },

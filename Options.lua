@@ -349,7 +349,6 @@ local function BuildGeneralContent(parent)
 
     local categoryItems = {
         { label = "Show Blessings",         key = "blessings" },
-        { label = "Show Greater Blessings", key = "greaterBlessings" },
         { label = "Show Auras",             key = "auras" },
         { label = "Show Seals",             key = "seals" },
     }

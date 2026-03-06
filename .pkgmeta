@@ -7,7 +7,6 @@ manual-changelog:
 ignore:
   - docs
   - README.md
-  - RELEASE.md
   - .gitignore
   - .pkgmeta
   - .github
