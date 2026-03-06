@@ -160,7 +160,7 @@ end
 local steps = {
     {
         title = "The HUD",
-        desc = "This is your HUD \226\128\148 it shows your reagent counts (Symbol of Kings and Symbol of Divinity) and active blessings at a glance.",
+        desc = "This is your HUD \226\128\148 it shows your Symbol of Kings reagent count at a glance.",
         setup = function()
             local hud = PaladinToolsHUD
             if hud and not hud:IsShown() then hud:Show() end

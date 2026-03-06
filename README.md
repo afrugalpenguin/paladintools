@@ -12,18 +12,16 @@ A paladin utility addon for World of Warcraft TBC Anniversary Classic. Provides 
 - Toggle individual categories on/off
 
 ### Buff Manager HUD
-- Compact, movable HUD showing your active blessings and auras
-- Reagent counter for Symbol of Kings and Symbol of Divinity
+- Compact, movable reagent counter (Symbol of Kings)
 - Horizontal or vertical layout
 - Configurable button size
 - Option to auto-hide in combat
 
 ### Blessing Session Panel
-- Track active blessings across your group/raid
-- Monitor which group members have (or are missing) buffs
+- Shows group size and reagent readiness at a glance
 - Adjustable background opacity
 
-### Trade Helper (Buff Queue)
+### Buff Helper (Buff Queue)
 - Listens for whispers (and optionally party chat) containing buff-related keywords
 - Queues incoming buff requests with the player name and requested blessing
 - Auto-reply to acknowledge requests
