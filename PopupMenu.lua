@@ -300,9 +300,9 @@ function PM:BuildButtons()
         end
     end
 
-    -- Inverted triangle layout: blessings top-center, auras bottom-left, seals bottom-right
+    -- Four-quadrant X layout: blessings top-left, auras bottom-left, seals bottom-right
     local groups = {
-        { spells = blessingSpells, prefix = "Blessing", label = "Blessings", pos = "top" },
+        { spells = blessingSpells, prefix = "Blessing", label = "Blessings", pos = "topleft" },
         { spells = auraSpells,     prefix = "Aura",     label = "Auras",     pos = "bottomleft" },
         { spells = sealSpells,     prefix = "Seal",     label = "Seals",     pos = "bottomright" },
     }
@@ -327,9 +327,11 @@ function PM:BuildButtons()
                 local btn = CreateSpellButton(spell, g.prefix, i)
 
                 local bx, by
-                if g.pos == "top" then
-                    -- Centered horizontally, above cursor
-                    bx = -blockW / 2 + col * spacing + btnSize / 2
+                if g.pos == "topleft" then
+                    bx = -BLOCK_GAP - blockW + col * spacing + btnSize / 2
+                    by = BLOCK_GAP + blockH - row * spacing - btnSize / 2
+                elseif g.pos == "topright" then
+                    bx = BLOCK_GAP + col * spacing + btnSize / 2
                     by = BLOCK_GAP + blockH - row * spacing - btnSize / 2
                 elseif g.pos == "bottomleft" then
                     bx = -BLOCK_GAP - blockW + col * spacing + btnSize / 2
@@ -359,11 +361,13 @@ function PM:BuildButtons()
             lbl:SetText(g.label)
             lbl:SetTextColor(0.96, 0.55, 0.73, 0.8)  -- Paladin pink
 
-            if g.pos == "top" then
-                lbl:SetPoint("BOTTOM", popup, "CENTER", 0, BLOCK_GAP + blockH + LABEL_GAP)
+            if g.pos == "topleft" then
+                lbl:SetPoint("BOTTOMRIGHT", popup, "CENTER", -BLOCK_GAP, BLOCK_GAP + blockH + LABEL_GAP)
+            elseif g.pos == "topright" then
+                lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", BLOCK_GAP, BLOCK_GAP + blockH + LABEL_GAP)
             elseif g.pos == "bottomleft" then
                 lbl:SetPoint("TOPRIGHT", popup, "CENTER", -BLOCK_GAP, -BLOCK_GAP - blockH - LABEL_GAP)
-            else
+            else -- bottomright
                 lbl:SetPoint("TOPLEFT", popup, "CENTER", BLOCK_GAP, -BLOCK_GAP - blockH - LABEL_GAP)
             end
 
