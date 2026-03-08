@@ -2,7 +2,7 @@ local PT = PaladinTools
 local Tour = {}
 PT:RegisterModule("Tour", Tour)
 
-local TOUR_VERSION = 1
+local TOUR_VERSION = 2
 
 -- Style constants (matches Options.lua / WhatsNew.lua)
 local BG_COLOR = { 0.08, 0.08, 0.12, 0.98 }
@@ -171,6 +171,31 @@ local steps = {
     {
         title = "The Popup Menu",
         desc = "This is the spell popup \226\128\148 use it to quickly cast blessings, auras, and seals. Bind a key in Options to open it.",
+        setup = function()
+            local popup = PaladinToolsPopup
+            if not popup then return nil end
+            popup:ClearAllPoints()
+            popup:SetPoint("CENTER", UIParent, "CENTER")
+            popup:SetBackdrop({
+                bgFile = "Interface\\BUTTONS\\WHITE8X8",
+                edgeFile = "Interface\\BUTTONS\\WHITE8X8",
+                edgeSize = 1,
+            })
+            popup:SetBackdropColor(BG_COLOR[1], BG_COLOR[2], BG_COLOR[3], BG_COLOR[4])
+            popup:SetBackdropBorderColor(BORDER_COLOR[1], BORDER_COLOR[2], BORDER_COLOR[3], BORDER_COLOR[4])
+            popup:Show()
+            return popup
+        end,
+        teardown = function()
+            local popup = PaladinToolsPopup
+            if not popup then return end
+            popup:SetBackdrop(nil)
+            if popup:IsShown() then popup:Hide() end
+        end,
+    },
+    {
+        title = "Blessing Session",
+        desc = "The top-right quadrant is your blessing manager \226\128\148 one row per class in your group. Right-click a row to assign a Greater Blessing, left-click to cast it. A timer overlay shows remaining buff duration.",
         setup = function()
             local popup = PaladinToolsPopup
             if not popup then return nil end
