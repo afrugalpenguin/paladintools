@@ -32,6 +32,9 @@ read_globals = {
     "UnitClass",
     "UnitFactionGroup",
     "UnitName",
+    "UnitExists",
+    "UnitBuff",
+    "UnitIsDeadOrGhost",
 
     -- WoW Game State
     "GetTime",
@@ -44,6 +47,7 @@ read_globals = {
     "GetItemCount",
     "GetNumGroupMembers",
     "InCombatLockdown",
+    "IsInRaid",
     "BOOKTYPE_SPELL",
     "NUM_BAG_SLOTS",
 
@@ -71,7 +75,6 @@ read_globals = {
     "PaladinToolsHUD",
     "PaladinToolsPopup",
     "PaladinToolsOptions",
-    "PaladinToolsBlessingSession",
     "PaladinToolsTourWelcome",
     "PaladinToolsTour",
 
