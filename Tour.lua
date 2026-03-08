@@ -194,7 +194,7 @@ local steps = {
         end,
     },
     {
-        title = "Blessing Session",
+        title = "Blessing Manager",
         desc = "The top-right quadrant is your blessing manager \226\128\148 one row per class in your group. Right-click a row to assign a Greater Blessing, left-click to cast it. A timer overlay shows remaining buff duration.",
         setup = function()
             local popup = PaladinToolsPopup

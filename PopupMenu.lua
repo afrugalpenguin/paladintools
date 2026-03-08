@@ -260,7 +260,7 @@ local function CreateSpellButton(spell, prefix, index)
     return btn
 end
 
--- Blessing Session: buff scanning state
+-- Blessing Manager: buff scanning state
 local classRoster = {}    -- { WARRIOR = { "unit1", "unit2" }, ... }
 local classBlessings = {} -- { WARRIOR = { buffed = 2, total = 3, expires = time, duration = 600 }, ... }
 local knownGreaters = {}  -- ordered list of blessing types the player knows

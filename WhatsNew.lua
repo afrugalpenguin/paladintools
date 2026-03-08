@@ -9,7 +9,7 @@ local changelog = {
         version = "1.0.1",
         features = {},
         fixes = {
-            "Fixed inaccurate HUD and Blessing Session descriptions",
+            "Fixed inaccurate HUD and Blessing Manager descriptions",
             "Renamed Trade Helper to Buff Helper",
         },
     },
@@ -26,7 +26,7 @@ local changelog = {
             "Initial release: blessings, auras, seals popup menu",
             "Reagent tracking HUD (Symbol of Kings)",
             "Buff request whisper queue",
-            "Blessing session panel",
+            "Blessing manager",
             "Tabbed options panel",
             "Masque support",
         },

@@ -45,10 +45,10 @@ function TH:MatchKeyword(msg)
     return nil
 end
 
-local function NotifyBlessingSession()
-    local bm = PT.modules["BuffManager"]
-    if bm and bm.UpdateSessionIfShown then
-        bm:UpdateSessionIfShown()
+local function NotifyBlessingManager()
+    local pm = PT.modules["PopupMenu"]
+    if pm and pm.UpdateClassGridVisuals then
+        pm:UpdateClassGridVisuals()
     end
 end
 
@@ -58,13 +58,13 @@ function TH:AddToQueue(name, request)
         if entry.name == name then
             entry.request = request
             self:UpdateQueueDisplay()
-            NotifyBlessingSession()
+            NotifyBlessingManager()
             return
         end
     end
     tinsert(queue, { name = name, request = request })
     self:UpdateQueueDisplay()
-    NotifyBlessingSession()
+    NotifyBlessingManager()
 
     if PaladinToolsDB.autoReply then
         local position = #queue
@@ -83,7 +83,7 @@ function TH:RemoveFromQueue(index)
         SendChatMessage("Blessed!", "WHISPER", nil, entry.name)
     end
     self:UpdateQueueDisplay()
-    NotifyBlessingSession()
+    NotifyBlessingManager()
     if #queue == 0 then
         queueFrame:Hide()
     end
@@ -119,7 +119,7 @@ function TH:CreateQueueFrame()
     title:SetText("|cffF58CBABuff Queue|r")
     queueFrame.title = title
 
-    -- Blessing session shortcut button
+    -- Blessing manager shortcut button
     local sessBtn = CreateFrame("Button", nil, queueFrame)
     sessBtn:SetSize(14, 14)
     sessBtn:SetPoint("TOPRIGHT", queueFrame, "TOPRIGHT", -6, -4)
@@ -132,12 +132,11 @@ function TH:CreateQueueFrame()
     sessHL:SetTexture("Interface\\Buttons\\ButtonHilight-Square")
     sessHL:SetBlendMode("ADD")
     sessBtn:SetScript("OnClick", function()
-        local bm = PT.modules["BuffManager"]
-        if bm then bm:ToggleBlessingSession() end
+        PaladinTools_TogglePopup()
     end)
     sessBtn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:SetText("Open Blessing Session")
+        GameTooltip:SetText("Open Blessing Manager")
         GameTooltip:Show()
     end)
     sessBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
