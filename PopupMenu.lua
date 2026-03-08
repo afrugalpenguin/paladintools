@@ -164,6 +164,15 @@ function PM:CreatePopup()
     end)
 
     self:BuildButtons()
+
+    local timerElapsed = 0
+    popup:SetScript("OnUpdate", function(self, elapsed)
+        timerElapsed = timerElapsed + elapsed
+        if timerElapsed >= 0.25 then
+            timerElapsed = 0
+            PM:UpdateClassGridVisuals()
+        end
+    end)
 end
 
 local function CreateSpellButton(spell, prefix, index)
@@ -553,6 +562,10 @@ function PM:BuildButtons()
     wipe(buttons)
     for _, lbl in ipairs(labels) do lbl:Hide() end
     wipe(labels)
+    for _, row in pairs(classGridButtons) do
+        row.btn:Hide()
+    end
+    wipe(classGridButtons)
 
     local cats = PaladinToolsDB.popupCategories
     local playerFaction = UnitFactionGroup("player")
@@ -675,6 +688,53 @@ function PM:BuildButtons()
         end
     end
 
+    -- Build class grid (top-right quadrant)
+    ScanKnownGreaters()
+    ScanRoster()
+    ScanBlessings()
+
+    local gridBtnSize = PaladinToolsDB.popupButtonSize
+    local gridSpacing = gridBtnSize + BUTTON_PADDING
+    local gridClasses = {}
+
+    local CLASS_ORDER = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }
+    for _, class in ipairs(CLASS_ORDER) do
+        if classRoster[class] then
+            tinsert(gridClasses, class)
+        end
+    end
+
+    for gridIndex, class in ipairs(gridClasses) do
+        local row = CreateClassGridRow(class)
+        classGridButtons[class] = row
+
+        local bx = BLOCK_GAP + gridBtnSize / 2
+        local by = BLOCK_GAP + (#gridClasses * gridSpacing) - (gridIndex - 1) * gridSpacing - gridBtnSize / 2
+
+        row.btn:ClearAllPoints()
+        row.btn:SetPoint("CENTER", popup, "CENTER", bx, by)
+
+        local edgeX = bx + gridBtnSize / 2 + 30
+        local edgeY = by + gridBtnSize / 2
+        if edgeX > maxAbsX then maxAbsX = edgeX end
+        if edgeY > maxAbsY then maxAbsY = edgeY end
+    end
+
+    if #gridClasses > 0 then
+        local lbl = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        lbl:SetText("Blessings")
+        lbl:SetTextColor(0.96, 0.55, 0.73, 0.8)
+        local gridBlockH = #gridClasses * gridSpacing
+        lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", BLOCK_GAP, BLOCK_GAP + gridBlockH + 2)
+        tinsert(labels, lbl)
+
+        local labelEdgeY = BLOCK_GAP + gridBlockH + 14
+        if labelEdgeY > maxAbsY then maxAbsY = labelEdgeY end
+    end
+
+    PM:UpdateClassGridAttributes()
+    PM:UpdateClassGridVisuals()
+
     PT.Masque:ReSkin("Popup")
 
     -- Size popup to contain all buttons, labels, and backdrop padding
@@ -711,6 +771,7 @@ end
 
 function PM:OnEvent(event, ...)
     if event == "SPELLS_CHANGED" then
+        ScanKnownGreaters()
         if popup then
             self:BuildButtons()
         end
@@ -722,5 +783,15 @@ function PM:OnEvent(event, ...)
             toggleBtn:SetAttribute("popupopen", nil)
         end
         PM:ApplyKeybind()
+        self:UpdateClassGridAttributes()
+    elseif event == "GROUP_ROSTER_UPDATE" then
+        ScanRoster()
+        ScanBlessings()
+        if popup then
+            self:BuildButtons()
+        end
+    elseif event == "UNIT_AURA" then
+        ScanBlessings()
+        self:UpdateClassGridVisuals()
     end
 end
