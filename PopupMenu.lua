@@ -46,7 +46,8 @@ function PM:Init()
     self:CreatePopup()
     self:ApplyKeybind()
     self:UpdateCloseOnCast()
-    PT:RegisterEvents("SPELLS_CHANGED", "PLAYER_REGEN_ENABLED")
+    PT:RegisterEvents("SPELLS_CHANGED", "PLAYER_REGEN_ENABLED",
+        "UNIT_AURA", "GROUP_ROSTER_UPDATE")
 end
 
 function PM:CreateToggleButton()
@@ -248,6 +249,95 @@ local function CreateSpellButton(spell, prefix, index)
 
     tinsert(buttons, btn)
     return btn
+end
+
+-- Blessing Session: buff scanning state
+local classRoster = {}    -- { WARRIOR = { "unit1", "unit2" }, ... }
+local classBlessings = {} -- { WARRIOR = { buffed = 2, total = 3, expires = time, duration = 600 }, ... }
+local knownGreaters = {}  -- ordered list of blessing types the player knows
+
+local function ScanKnownGreaters()
+    wipe(knownGreaters)
+    for _, bType in ipairs(PT.BLESSING_CYCLE_ORDER) do
+        local spellData = PT.GREATER_BLESSING_BY_TYPE[bType]
+        if spellData and FindSpellInBook(spellData.name) then
+            tinsert(knownGreaters, bType)
+        end
+    end
+end
+
+local function ScanRoster()
+    wipe(classRoster)
+    local groupSize = GetNumGroupMembers()
+    if groupSize == 0 then
+        local _, englishClass = UnitClass("player")
+        classRoster[englishClass] = { "player" }
+        return
+    end
+    local prefix = IsInRaid() and "raid" or "party"
+    for i = 1, groupSize do
+        local unit = prefix .. i
+        if UnitExists(unit) then
+            local _, englishClass = UnitClass(unit)
+            if englishClass then
+                if not classRoster[englishClass] then
+                    classRoster[englishClass] = {}
+                end
+                tinsert(classRoster[englishClass], unit)
+            end
+        end
+    end
+    if prefix == "party" then
+        local _, englishClass = UnitClass("player")
+        if not classRoster[englishClass] then
+            classRoster[englishClass] = {}
+        end
+        tinsert(classRoster[englishClass], "player")
+    end
+end
+
+local function ScanBlessings()
+    wipe(classBlessings)
+    local blessingNames = {}
+    for _, spell in ipairs(PT.BLESSINGS) do
+        blessingNames[spell.name] = spell.type
+    end
+    for _, spell in ipairs(PT.GREATER_BLESSINGS) do
+        blessingNames[spell.name] = spell.type
+    end
+
+    for class, units in pairs(classRoster) do
+        local total = #units
+        local buffed = 0
+        local shortestExpires = nil
+        local shortestDuration = nil
+        local assignedType = PaladinToolsDB.blessingAssignments[class]
+
+        for _, unit in ipairs(units) do
+            if not UnitIsDeadOrGhost(unit) then
+                for i = 1, 40 do
+                    local name, _, _, _, duration, expirationTime = UnitBuff(unit, i)
+                    if not name then break end
+                    local bType = blessingNames[name]
+                    if bType and bType == assignedType then
+                        buffed = buffed + 1
+                        if expirationTime and (not shortestExpires or expirationTime < shortestExpires) then
+                            shortestExpires = expirationTime
+                            shortestDuration = duration
+                        end
+                        break
+                    end
+                end
+            end
+        end
+
+        classBlessings[class] = {
+            buffed = buffed,
+            total = total,
+            expires = shortestExpires,
+            duration = shortestDuration or 600,
+        }
+    end
 end
 
 function PM:BuildButtons()
