@@ -402,13 +402,6 @@ local function BuildAppearanceContent(parent)
         if th and th.RebuildQueue then th:RebuildQueue() end
     end)
 
-    y = CreateHeader(parent, "Opacity", y - 6)
-    y = CreateSlider(parent, "Session Background Opacity", "sessionBgAlpha", 0.0, 1.0, 0.05, y, function()
-        if PaladinToolsBlessingSession then
-            PaladinToolsBlessingSession:SetBackdropColor(0, 0, 0, PaladinToolsDB.sessionBgAlpha)
-        end
-    end)
-
     parent:SetHeight(math.abs(y) + 8)
 end
 

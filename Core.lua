@@ -34,12 +34,12 @@ local defaults = {
     listenPartyChat = false,
     popupButtonSize = 36,
     maxQueueDisplay = 10,
-    sessionBgAlpha = 0.9,
     popupKeybind = nil,
     hudShowReagents = true,
     hudHideInCombat = false,
     popupReleaseMode = true,
     popupCategories = { blessings = true, auras = true, seals = true },
+    blessingAssignments = {},
 }
 
 function PaladinTools:RegisterModule(name, mod)
@@ -117,8 +117,8 @@ SlashCmdList["PALADINTOOLS"] = function(msg)
         local bm = PaladinTools.modules["BuffManager"]
         if bm then bm:ToggleHUD() end
     elseif cmd == "session" then
-        local bm = PaladinTools.modules["BuffManager"]
-        if bm then bm:ToggleBlessingSession() end
+        local pm = PaladinTools.modules["PopupMenu"]
+        if pm then PaladinTools_TogglePopup() end
     elseif cmd == "queue" then
         local th = PaladinTools.modules["TradeHelper"]
         if th then th:ToggleQueue() end
