@@ -60,3 +60,25 @@ PT.REAGENT_ITEM_SET[PT.SYMBOL_OF_DIVINITY] = "symbolOfDivinity"
 PT.TRACKED_ITEM_SET = {}
 PT.TRACKED_ITEM_SET[PT.SYMBOL_OF_KINGS] = "symbolOfKings"
 PT.TRACKED_ITEM_SET[PT.SYMBOL_OF_DIVINITY] = "symbolOfDivinity"
+
+-- Class icon atlas: Interface\GLUES\CHARACTERCREATE\UI-CharacterCreate-Classes
+PT.CLASS_ICON_COORDS = {
+    WARRIOR     = { 0.00, 0.25, 0.00, 0.25 },
+    MAGE        = { 0.25, 0.50, 0.00, 0.25 },
+    ROGUE       = { 0.50, 0.75, 0.00, 0.25 },
+    DRUID       = { 0.75, 1.00, 0.00, 0.25 },
+    HUNTER      = { 0.00, 0.25, 0.25, 0.50 },
+    SHAMAN      = { 0.25, 0.50, 0.25, 0.50 },
+    PRIEST      = { 0.50, 0.75, 0.25, 0.50 },
+    WARLOCK     = { 0.75, 1.00, 0.25, 0.50 },
+    PALADIN     = { 0.00, 0.25, 0.50, 0.75 },
+}
+
+PT.CLASS_ICON_TEXTURE = "Interface\\GLUES\\CHARACTERCREATE\\UI-CharacterCreate-Classes"
+
+PT.GREATER_BLESSING_BY_TYPE = {}
+for _, spell in ipairs(PT.GREATER_BLESSINGS) do
+    PT.GREATER_BLESSING_BY_TYPE[spell.type] = spell
+end
+
+PT.BLESSING_CYCLE_ORDER = { "might", "wisdom", "kings", "salvation", "sanctuary", "light" }
