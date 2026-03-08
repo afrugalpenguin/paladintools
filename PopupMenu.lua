@@ -340,6 +340,213 @@ local function ScanBlessings()
     end
 end
 
+local classGridButtons = {}
+local CLASS_ICON_SIZE = 16
+
+local function CreateClassGridRow(class)
+    local btnSize = PaladinToolsDB.popupButtonSize
+    local row = {}
+
+    local btn = CreateFrame("Button", "PaladinToolsClassGrid" .. class, popup, "SecureActionButtonTemplate")
+    btn:SetSize(btnSize, btnSize)
+    btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+
+    local tmplNormal = btn:GetNormalTexture()
+    if tmplNormal then
+        tmplNormal:SetTexture(nil)
+        tmplNormal:Hide()
+    end
+
+    local iconTex = btn:CreateTexture(nil, "ARTWORK")
+    iconTex:SetPoint("TOPLEFT", 1, -1)
+    iconTex:SetPoint("BOTTOMRIGHT", -1, 1)
+    iconTex:SetTexture("Interface\\ICONS\\INV_Misc_QuestionMark")
+    row.icon = iconTex
+
+    local overlay = btn:CreateTexture(nil, "OVERLAY", nil, 1)
+    overlay:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -1, -1)
+    overlay:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -1, 1)
+    overlay:SetWidth(0)
+    overlay:SetColorTexture(0, 0, 0, 0.6)
+    row.overlay = overlay
+
+    local normalTex, highlightTex
+    if PT.Masque:IsEnabled() then
+        normalTex = btn:CreateTexture(nil, "OVERLAY")
+        normalTex:SetAllPoints()
+        btn:SetNormalTexture(normalTex)
+    else
+        local border = btn:CreateTexture(nil, "BACKGROUND")
+        border:SetAllPoints()
+        border:SetColorTexture(0, 0, 0, 1)
+    end
+
+    highlightTex = btn:CreateTexture(nil, "HIGHLIGHT")
+    highlightTex:SetAllPoints()
+    highlightTex:SetTexture("Interface\\Buttons\\ButtonHilight-Square")
+    highlightTex:SetBlendMode("ADD")
+    btn:SetHighlightTexture(highlightTex)
+
+    local classIcon = btn:CreateTexture(nil, "ARTWORK")
+    classIcon:SetSize(CLASS_ICON_SIZE, CLASS_ICON_SIZE)
+    classIcon:SetPoint("RIGHT", btn, "LEFT", -4, 0)
+    classIcon:SetTexture(PT.CLASS_ICON_TEXTURE)
+    local coords = PT.CLASS_ICON_COORDS[class]
+    if coords then
+        classIcon:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
+    end
+    row.classIcon = classIcon
+
+    local countText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    countText:SetPoint("LEFT", btn, "RIGHT", 4, 0)
+    countText:SetText("0/0")
+    row.countText = countText
+
+    btn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        local assignedType = PaladinToolsDB.blessingAssignments[class]
+        if assignedType then
+            local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
+            if spellData then
+                GameTooltip:SetSpellByID(spellData.spellID)
+            end
+        else
+            GameTooltip:SetText("No blessing assigned")
+            GameTooltip:AddLine("Right-click to assign", 1, 1, 1)
+        end
+        GameTooltip:Show()
+    end)
+    btn:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
+    btn:SetScript("PostClick", function(self, mouseBtn)
+        if mouseBtn == "RightButton" and not InCombatLockdown() then
+            PM:CycleBlessing(class)
+        end
+    end)
+
+    SecureHandlerWrapScript(btn, "OnEnter", toggleBtn, [[
+        if owner:GetAttribute("releasemode") then
+            owner:SetAttribute("ptspell", self:GetAttribute("spell"))
+        end
+    ]])
+    SecureHandlerWrapScript(btn, "OnLeave", toggleBtn, [[
+        if owner:GetAttribute("releasemode") then
+            owner:SetAttribute("ptspell", nil)
+        end
+    ]])
+
+    SecureHandlerWrapScript(btn, "OnClick", toggleBtn, "", [[
+        if owner:GetAttribute("closeOnCast") then
+            local p = owner:GetFrameRef("popup")
+            if p and p:IsShown() then
+                p:Hide()
+            end
+        end
+    ]])
+
+    PT.Masque:AddButton("Popup", btn, {
+        Icon = iconTex,
+        Normal = normalTex,
+        Highlight = highlightTex,
+    })
+
+    row.btn = btn
+    row.class = class
+    return row
+end
+
+function PM:CycleBlessing(class)
+    if #knownGreaters == 0 then return end
+    local current = PaladinToolsDB.blessingAssignments[class]
+    local nextType = nil
+
+    if not current then
+        nextType = knownGreaters[1]
+    else
+        for i, bType in ipairs(knownGreaters) do
+            if bType == current then
+                nextType = knownGreaters[i + 1] or nil
+                break
+            end
+        end
+    end
+
+    PaladinToolsDB.blessingAssignments[class] = nextType
+    self:UpdateClassGridAttributes()
+    self:UpdateClassGridVisuals()
+end
+
+function PM:UpdateClassGridAttributes()
+    if InCombatLockdown() then return end
+    for class, row in pairs(classGridButtons) do
+        local assignedType = PaladinToolsDB.blessingAssignments[class]
+        if assignedType then
+            local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
+            if spellData then
+                local spellName = GetSpellInfo(spellData.spellID)
+                row.btn:SetAttribute("type", "spell")
+                row.btn:SetAttribute("spell", spellName)
+                local units = classRoster[class]
+                if units and units[1] then
+                    row.btn:SetAttribute("unit", units[1])
+                end
+            end
+        else
+            row.btn:SetAttribute("type", nil)
+            row.btn:SetAttribute("spell", nil)
+            row.btn:SetAttribute("unit", nil)
+        end
+    end
+end
+
+function PM:UpdateClassGridVisuals()
+    for class, row in pairs(classGridButtons) do
+        local assignedType = PaladinToolsDB.blessingAssignments[class]
+
+        if assignedType then
+            local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
+            if spellData then
+                local _, _, icon = GetSpellInfo(spellData.spellID)
+                row.icon:SetTexture(icon)
+            end
+        else
+            row.icon:SetTexture("Interface\\ICONS\\INV_Misc_QuestionMark")
+        end
+
+        local info = classBlessings[class]
+        if info then
+            row.countText:SetText(info.buffed .. "/" .. info.total)
+            if info.buffed >= info.total then
+                row.countText:SetTextColor(0.2, 1, 0.2)
+            else
+                row.countText:SetTextColor(1, 0.2, 0.2)
+            end
+        else
+            row.countText:SetText("0/0")
+            row.countText:SetTextColor(0.5, 0.5, 0.5)
+        end
+
+        if assignedType and info and info.expires then
+            local remaining = info.expires - GetTime()
+            if remaining > 0 then
+                local pct = 1 - (remaining / info.duration)
+                local btnSize = PaladinToolsDB.popupButtonSize - 2
+                row.overlay:SetWidth(math.max(0, pct * btnSize))
+            else
+                row.overlay:SetWidth(PaladinToolsDB.popupButtonSize - 2)
+            end
+        else
+            if assignedType then
+                row.overlay:SetWidth(PaladinToolsDB.popupButtonSize - 2)
+            else
+                row.overlay:SetWidth(0)
+            end
+        end
+    end
+end
+
 function PM:BuildButtons()
     -- Clear old buttons and labels
     for _, btn in ipairs(buttons) do btn:Hide() end
