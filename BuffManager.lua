@@ -3,7 +3,6 @@ local BM = {}
 PT:RegisterModule("BuffManager", BM)
 
 local hudFrame = nil
-local sessionFrame = nil
 local counts = { symbolOfKings = 0, symbolOfDivinity = 0 }
 local foundItem = { symbolOfKings = nil, symbolOfDivinity = nil }
 local hudButtons = {}
@@ -11,7 +10,6 @@ local hudButtons = {}
 function BM:Init()
     self:ScanBags()
     self:CreateHUD()
-    self:CreateBlessingSession()
     if PaladinToolsDB.hudVisible then
         hudFrame:Show()
     else
@@ -61,11 +59,6 @@ function BM:UpdateDisplays()
     end
 
     self:RebuildHUD()
-
-    -- Update blessing session if open
-    if sessionFrame and sessionFrame:IsShown() then
-        self:UpdateSessionProgress()
-    end
 end
 
 -- HUD
@@ -210,89 +203,6 @@ function BM:RebuildHUD()
         hudFrame:SetSize(btnSize + 16, (btnSize * visIndex) + ((visIndex - 1) * 2) + 16)
     else
         hudFrame:SetSize((btnSize * visIndex) + ((visIndex - 1) * 2) + 16, btnSize + 16)
-    end
-end
-
--- Blessing Session
-function BM:CreateBlessingSession()
-    sessionFrame = CreateFrame("Frame", "PaladinToolsBlessingSession", UIParent, "BackdropTemplate")
-    sessionFrame:SetSize(220, 140)
-    sessionFrame:SetPoint("CENTER")
-    sessionFrame:SetFrameStrata("HIGH")
-    sessionFrame:SetClampedToScreen(true)
-    sessionFrame:SetMovable(true)
-    sessionFrame:EnableMouse(true)
-    sessionFrame:RegisterForDrag("LeftButton")
-    sessionFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
-    sessionFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-    sessionFrame:Hide()
-
-    tinsert(UISpecialFrames, "PaladinToolsBlessingSession")
-
-    sessionFrame:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 12,
-        insets = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    sessionFrame:SetBackdropColor(0, 0, 0, PaladinToolsDB.sessionBgAlpha)
-
-    -- Close button
-    local closeBtn = CreateFrame("Button", nil, sessionFrame, "UIPanelCloseButton")
-    closeBtn:SetPoint("TOPRIGHT", sessionFrame, "TOPRIGHT", -2, -2)
-
-    -- Title
-    local title = sessionFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOP", 0, -10)
-    title:SetText("|cffF58CBABlessing Session|r")
-
-    -- Group size display
-    local groupText = sessionFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    groupText:SetPoint("TOP", 0, -32)
-    sessionFrame.groupText = groupText
-
-    -- Reagent count
-    local reagentText = sessionFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    reagentText:SetPoint("TOP", 0, -52)
-    sessionFrame.reagentText = reagentText
-
-    -- Status
-    local statusText = sessionFrame:CreateFontString(nil, "OVERLAY", "GameFontGreen")
-    statusText:SetPoint("TOP", 0, -76)
-    sessionFrame.statusText = statusText
-end
-
-function BM:GetGroupSize()
-    local groupSize = GetNumGroupMembers()
-    return math.max(1, groupSize)
-end
-
-function BM:UpdateSessionProgress()
-    local groupSize = self:GetGroupSize()
-
-    sessionFrame.groupText:SetText("Group size: " .. groupSize)
-    sessionFrame.reagentText:SetText("Symbol of Kings: " .. counts.symbolOfKings)
-
-    if counts.symbolOfKings >= groupSize then
-        sessionFrame.statusText:SetText("Reagents ready!")
-    else
-        local needed = groupSize - counts.symbolOfKings
-        sessionFrame.statusText:SetText("Need " .. needed .. " more symbols")
-    end
-end
-
-function BM:UpdateSessionIfShown()
-    if sessionFrame and sessionFrame:IsShown() then
-        self:UpdateSessionProgress()
-    end
-end
-
-function BM:ToggleBlessingSession()
-    if sessionFrame:IsShown() then
-        sessionFrame:Hide()
-    else
-        self:UpdateSessionProgress()
-        sessionFrame:Show()
     end
 end
 
