@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.1.1**
+- Fixed HUD buttons invisible when item icon isn't cached (Symbol of Divinity)
+- Added amber/red border highlights to Blessings Manager buttons based on remaining buff duration
+
 **v1.1.0**
 - New: Blessings Manager — horizontal class grid on popup, right-click to assign Greater Blessings, left-click to cast, with timer overlays
 - New: Symbol of Divinity tracking on HUD

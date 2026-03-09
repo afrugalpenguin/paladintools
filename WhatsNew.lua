@@ -6,6 +6,15 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "1.1.1",
+        features = {
+            "Amber/red border highlights on Blessings Manager buttons when buffs are expiring",
+        },
+        fixes = {
+            "Fixed HUD buttons invisible when item icon isn't cached (Symbol of Divinity)",
+        },
+    },
+    {
         version = "1.1.0",
         features = {
             "Blessings Manager: horizontal class grid on popup with timer overlays",
