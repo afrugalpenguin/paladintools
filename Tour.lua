@@ -2,7 +2,7 @@ local PT = PaladinTools
 local Tour = {}
 PT:RegisterModule("Tour", Tour)
 
-local TOUR_VERSION = 2
+local TOUR_VERSION = 3
 
 -- Style constants (matches Options.lua / WhatsNew.lua)
 local BG_COLOR = { 0.08, 0.08, 0.12, 0.98 }
@@ -160,7 +160,7 @@ end
 local steps = {
     {
         title = "The HUD",
-        desc = "This is your HUD \226\128\148 it shows your Symbol of Kings reagent count at a glance.",
+        desc = "This is your HUD \226\128\148 it shows your reagent counts (Symbol of Kings and Symbol of Divinity) at a glance.",
         setup = function()
             local hud = PaladinToolsHUD
             if hud and not hud:IsShown() then hud:Show() end
@@ -195,8 +195,25 @@ local steps = {
     },
     {
         title = "Blessing Manager",
-        desc = "The top-right quadrant is your blessing manager \226\128\148 one row per class in your group. Right-click a row to assign a Greater Blessing, left-click to cast it. A timer overlay shows remaining buff duration.",
+        desc = "The top row is your Blessings Manager \226\128\148 one button per class in your group. Right-click to cycle through Greater Blessings, left-click to cast. The timer overlay shows remaining buff duration. Class icons sit above each button.",
         setup = function()
+            -- Enable fake party so the grid is populated during the tour
+            if SlashCmdList["FAKEPARTY"] then
+                SlashCmdList["FAKEPARTY"]()
+            end
+
+            -- Auto-assign blessings to demo classes so timers are visible
+            local PM = PT.modules["PopupMenu"]
+            if PM and PT.BLESSING_CYCLE_ORDER and PT.BLESSING_CYCLE_ORDER[1] then
+                local firstBlessing = PT.BLESSING_CYCLE_ORDER[1]
+                for _, class in ipairs({ "WARRIOR", "PRIEST", "MAGE", "ROGUE" }) do
+                    if not PaladinToolsDB.blessingAssignments[class] then
+                        PaladinToolsDB.blessingAssignments[class] = firstBlessing
+                    end
+                end
+                if PM.Rebuild then PM:Rebuild() end
+            end
+
             local popup = PaladinToolsPopup
             if not popup then return nil end
             popup:ClearAllPoints()
@@ -212,6 +229,11 @@ local steps = {
             return popup
         end,
         teardown = function()
+            -- Disable fake party
+            if SlashCmdList["FAKEPARTY"] then
+                SlashCmdList["FAKEPARTY"]()
+            end
+
             local popup = PaladinToolsPopup
             if not popup then return end
             popup:SetBackdrop(nil)

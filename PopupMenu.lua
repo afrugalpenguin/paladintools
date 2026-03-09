@@ -398,7 +398,7 @@ local function CreateClassGridRow(class)
 
     local classIcon = btn:CreateTexture(nil, "ARTWORK")
     classIcon:SetSize(CLASS_ICON_SIZE, CLASS_ICON_SIZE)
-    classIcon:SetPoint("RIGHT", btn, "LEFT", -4, 0)
+    classIcon:SetPoint("BOTTOM", btn, "TOP", 0, 2)
     classIcon:SetTexture(PT.CLASS_ICON_TEXTURE)
     local coords = PT.CLASS_ICON_COORDS[class]
     if coords then
@@ -407,7 +407,7 @@ local function CreateClassGridRow(class)
     row.classIcon = classIcon
 
     local countText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    countText:SetPoint("LEFT", btn, "RIGHT", 4, 0)
+    countText:SetPoint("BOTTOM", btn, "BOTTOM", 0, 2)
     countText:SetText("0/0")
     row.countText = countText
 
@@ -483,6 +483,7 @@ function PM:CycleBlessing(class)
     end
 
     PaladinToolsDB.blessingAssignments[class] = nextType
+    ScanBlessings()
     self:UpdateClassGridAttributes()
     self:UpdateClassGridVisuals()
 end
@@ -704,31 +705,35 @@ function PM:BuildButtons()
         end
     end
 
+    -- Align class grid button centers with the blessings row
+    local gridBtnY = BLOCK_GAP + gridSpacing - gridBtnSize / 2
+
     for gridIndex, class in ipairs(gridClasses) do
         local row = CreateClassGridRow(class)
         classGridButtons[class] = row
 
-        local bx = BLOCK_GAP + gridBtnSize / 2
-        local by = BLOCK_GAP + (#gridClasses * gridSpacing) - (gridIndex - 1) * gridSpacing - gridBtnSize / 2
+        local bx = BLOCK_GAP + (gridIndex - 1) * gridSpacing + gridBtnSize / 2
+        local by = gridBtnY
 
         row.btn:ClearAllPoints()
         row.btn:SetPoint("CENTER", popup, "CENTER", bx, by)
 
-        local edgeX = bx + gridBtnSize / 2 + 30
-        local edgeY = by + gridBtnSize / 2
+        local edgeX = bx + gridBtnSize / 2
+        -- Account for class icon above the button
+        local edgeY = by + gridBtnSize / 2 + CLASS_ICON_SIZE + 2
         if edgeX > maxAbsX then maxAbsX = edgeX end
         if edgeY > maxAbsY then maxAbsY = edgeY end
     end
 
     if #gridClasses > 0 then
         local lbl = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        lbl:SetText("Blessings")
+        lbl:SetText("Blessings Manager")
         lbl:SetTextColor(0.96, 0.55, 0.73, 0.8)
-        local gridBlockH = #gridClasses * gridSpacing
-        lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", BLOCK_GAP, BLOCK_GAP + gridBlockH + 2)
+        local gridTop = gridBtnY + gridBtnSize / 2 + CLASS_ICON_SIZE + 2
+        lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", BLOCK_GAP, gridTop + LABEL_GAP)
         tinsert(labels, lbl)
 
-        local labelEdgeY = BLOCK_GAP + gridBlockH + 14
+        local labelEdgeY = gridTop + LABEL_GAP + 12
         if labelEdgeY > maxAbsY then maxAbsY = labelEdgeY end
     end
 

@@ -94,6 +94,7 @@ function BM:CreateHUD()
 
     local categories = {
         { type = "symbolOfKings", itemID = PT.SYMBOL_OF_KINGS, reagent = true },
+        { type = "symbolOfDivinity", itemID = PT.SYMBOL_OF_DIVINITY, reagent = true },
     }
 
     local visIndex = 0
