@@ -388,6 +388,7 @@ local function CreateClassGridRow(class)
         local border = btn:CreateTexture(nil, "BACKGROUND")
         border:SetAllPoints()
         border:SetColorTexture(0, 0, 0, 1)
+        row.border = border
     end
 
     highlightTex = btn:CreateTexture(nil, "HIGHLIGHT")
@@ -538,10 +539,12 @@ function PM:UpdateClassGridVisuals()
             row.countText:SetTextColor(0.5, 0.5, 0.5)
         end
 
+        local remainingPct = 0
         if assignedType and info and info.expires then
             local remaining = info.expires - GetTime()
             if remaining > 0 then
-                local pct = 1 - (remaining / info.duration)
+                remainingPct = remaining / info.duration
+                local pct = 1 - remainingPct
                 local btnSize = PaladinToolsDB.popupButtonSize - 2
                 row.overlay:SetWidth(math.max(0, pct * btnSize))
             else
@@ -552,6 +555,21 @@ function PM:UpdateClassGridVisuals()
                 row.overlay:SetWidth(PaladinToolsDB.popupButtonSize - 2)
             else
                 row.overlay:SetWidth(0)
+            end
+        end
+
+        -- Border color: red <25%, amber <50%, black otherwise
+        if row.border then
+            if assignedType and info and info.expires then
+                if remainingPct <= 0.25 then
+                    row.border:SetColorTexture(0.8, 0.1, 0.1, 1)
+                elseif remainingPct <= 0.50 then
+                    row.border:SetColorTexture(0.9, 0.6, 0.0, 1)
+                else
+                    row.border:SetColorTexture(0, 0, 0, 1)
+                end
+            else
+                row.border:SetColorTexture(0, 0, 0, 1)
             end
         end
     end

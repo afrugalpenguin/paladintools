@@ -103,9 +103,17 @@ function BM:CreateHUD()
         local btn = CreateFrame("Button", "PaladinToolsHUD" .. cat.type, hudFrame)
         btn:SetSize(btnSize, btnSize)
 
+        -- Border behind icon so button is visible even if icon isn't cached
+        if not PT.Masque:IsEnabled() then
+            local border = btn:CreateTexture(nil, "BACKGROUND")
+            border:SetAllPoints()
+            border:SetColorTexture(0, 0, 0, 1)
+        end
+
         local iconPath = GetItemIcon(defaultID)
-        local iconTex = btn:CreateTexture(nil, "BACKGROUND")
-        iconTex:SetAllPoints()
+        local iconTex = btn:CreateTexture(nil, "ARTWORK")
+        iconTex:SetPoint("TOPLEFT", 1, -1)
+        iconTex:SetPoint("BOTTOMRIGHT", -1, 1)
         if iconPath then iconTex:SetTexture(iconPath) end
         btn.icon = iconTex
 
