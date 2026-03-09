@@ -6,6 +6,18 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "1.1.0",
+        features = {
+            "Blessings Manager: horizontal class grid on popup with timer overlays",
+            "Symbol of Divinity tracking on HUD",
+            "Debug commands: /fakeraid and /fakeparty for UI testing",
+            "Tour now demos the Blessings Manager with a fake party",
+        },
+        fixes = {
+            "Blessing assignment changes now immediately rescan buff status",
+        },
+    },
+    {
         version = "1.0.1",
         features = {},
         fixes = {
