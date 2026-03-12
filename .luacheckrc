@@ -62,6 +62,7 @@ read_globals = {
 
     -- WoW Constants
     "RAID_CLASS_COLORS",
+    "LOCALIZED_CLASS_NAMES_MALE",
 
     -- WoW Input API
     "IsShiftKeyDown",

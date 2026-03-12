@@ -116,9 +116,9 @@ SlashCmdList["PALADINTOOLS"] = function(msg)
     elseif cmd == "hud" then
         local bm = PaladinTools.modules["BuffManager"]
         if bm then bm:ToggleHUD() end
-    elseif cmd == "session" then
-        local pm = PaladinTools.modules["PopupMenu"]
-        if pm then PaladinTools_TogglePopup() end
+    elseif cmd == "manager" then
+        local opts = PaladinTools.modules["Options"]
+        if opts then opts:ShowBlessings() end
     elseif cmd == "queue" then
         local th = PaladinTools.modules["TradeHelper"]
         if th then th:ToggleQueue() end
@@ -131,6 +131,17 @@ SlashCmdList["PALADINTOOLS"] = function(msg)
     elseif cmd == "options" then
         local opts = PaladinTools.modules["Options"]
         if opts then opts:Toggle() end
+    elseif cmd == "help" then
+        print("|cffF58CBAPaladinTools|r commands:")
+        print("  /pt - Open Blessing Manager")
+        print("  /pt popup - Toggle spell menu")
+        print("  /pt hud - Toggle HUD")
+        print("  /pt manager - Blessing manager")
+        print("  /pt queue - Toggle buff queue")
+        print("  /pt options - Open options panel")
+        print("  /pt tour - Start onboarding tour")
+        print("  /pt whatsnew - View changelog")
+        print("  /pt config - Show config")
     elseif cmd == "config" then
         print("|cffF58CBAPaladinTools|r config:")
         print("  HUD visible: " .. tostring(PaladinToolsDB.hudVisible))
@@ -141,15 +152,21 @@ SlashCmdList["PALADINTOOLS"] = function(msg)
         if wn and wn:ShouldShow() then
             wn:Show()
         else
-            print("|cffF58CBAPaladinTools|r commands:")
-            print("  /pt popup - Toggle spell menu")
-            print("  /pt hud - Toggle HUD")
-            print("  /pt session - Blessing manager")
-            print("  /pt queue - Toggle buff queue")
-            print("  /pt options - Open options panel")
-            print("  /pt tour - Start onboarding tour")
-            print("  /pt whatsnew - View changelog")
-            print("  /pt config - Show config")
+            -- Default: open options to Blessings Manager tab
+            local opts = PaladinTools.modules["Options"]
+            if opts then
+                opts:ShowBlessings()
+            else
+                print("|cffF58CBAPaladinTools|r commands:")
+                print("  /pt popup - Toggle spell menu")
+                print("  /pt hud - Toggle HUD")
+                print("  /pt manager - Blessing manager")
+                print("  /pt queue - Toggle buff queue")
+                print("  /pt options - Open options panel")
+                print("  /pt tour - Start onboarding tour")
+                print("  /pt whatsnew - View changelog")
+                print("  /pt config - Show config")
+            end
         end
     end
 end

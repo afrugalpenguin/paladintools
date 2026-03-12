@@ -3,6 +3,7 @@ local OPT = {}
 PT:RegisterModule("Options", OPT)
 
 local optionsFrame = nil
+local optionsLayout = nil
 
 -- Style constants (matches WhatsNew.lua)
 local BG_COLOR = { 0.08, 0.08, 0.12, 0.98 }
@@ -13,7 +14,7 @@ local ACCENT_COLOR = { 0.96, 0.55, 0.73 }
 local TAB_HEIGHT = 24
 local TAB_PAD = 4
 local FRAME_WIDTH = 420
-local FRAME_HEIGHT = 400
+local FRAME_HEIGHT = 500
 
 --------------------------------------------------------------------------------
 -- Control Builders
@@ -409,8 +410,198 @@ end
 -- Shared Layout Builder
 --------------------------------------------------------------------------------
 
+local function BuildBlessingsContent(parent)
+    local y = -8
+
+    y = CreateHeader(parent, "Blessing Assignments", y)
+
+    -- Description
+    local contentWidth = parent:GetWidth() - 24
+    if contentWidth < 100 then contentWidth = 360 end
+    local desc = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    desc:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, y)
+    desc:SetWidth(contentWidth)
+    desc:SetJustifyH("LEFT")
+    desc:SetText("Assign Greater Blessings to each class. "
+        .. "Click the blessing button to cycle through known blessings. "
+        .. "Assignments persist across sessions and are used by the popup casting grid.")
+    desc:SetWordWrap(true)
+    local descHeight = desc:GetStringHeight() or 28
+    y = y - descHeight - 8
+
+    local CLASS_ORDER = {
+        "DRUID", "HUNTER", "MAGE", "PALADIN", "PRIEST",
+        "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR",
+    }
+
+    -- Scan which Greater Blessings the player knows
+    local knownGreaters = {}
+    for _, bType in ipairs(PT.BLESSING_CYCLE_ORDER) do
+        local spellData = PT.GREATER_BLESSING_BY_TYPE[bType]
+        if spellData then
+            -- Use GetSpellInfo to check if the player knows the spell
+            local spellName = GetSpellInfo(spellData.spellID)
+            if spellName then
+                tinsert(knownGreaters, bType)
+            end
+        end
+    end
+
+    local ROW_HEIGHT = 28
+    local ICON_SIZE = 20
+
+    local classRows = {}
+
+    local function UpdateRowVisual(row, class)
+        local assignedType = PaladinToolsDB.blessingAssignments[class]
+        if assignedType then
+            local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
+            if spellData then
+                local spellName, _, icon = GetSpellInfo(spellData.spellID)
+                row.blessingIcon:SetTexture(icon)
+                row.blessingIcon:SetDesaturated(false)
+                row.blessingText:SetText(spellName or spellData.name)
+                row.blessingText:SetTextColor(1, 1, 1)
+            end
+        else
+            row.blessingIcon:SetTexture("Interface\\ICONS\\INV_Misc_QuestionMark")
+            row.blessingIcon:SetDesaturated(true)
+            row.blessingText:SetText("None")
+            row.blessingText:SetTextColor(0.5, 0.5, 0.5)
+        end
+    end
+
+    local function CycleBlessing(class)
+        if #knownGreaters == 0 then return end
+        local current = PaladinToolsDB.blessingAssignments[class]
+        local nextType = nil
+
+        if not current then
+            nextType = knownGreaters[1]
+        else
+            for i, bType in ipairs(knownGreaters) do
+                if bType == current then
+                    nextType = knownGreaters[i + 1] or nil
+                    break
+                end
+            end
+        end
+
+        PaladinToolsDB.blessingAssignments[class] = nextType
+
+        -- Update the popup class grid if it exists
+        local pm = PT.modules["PopupMenu"]
+        if pm then
+            if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
+            if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
+        end
+    end
+
+    for _, class in ipairs(CLASS_ORDER) do
+        local row = CreateFrame("Button", nil, parent)
+        local rowWidth = parent:GetWidth() - 16
+        if rowWidth < 100 then rowWidth = 360 end
+        row:SetSize(rowWidth, ROW_HEIGHT)
+        row:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y)
+
+        -- Class icon
+        local classIcon = row:CreateTexture(nil, "ARTWORK")
+        classIcon:SetSize(ICON_SIZE, ICON_SIZE)
+        classIcon:SetPoint("LEFT", row, "LEFT", 4, 0)
+        classIcon:SetTexture(PT.CLASS_ICON_TEXTURE)
+        local coords = PT.CLASS_ICON_COORDS[class]
+        if coords then
+            classIcon:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
+        end
+
+        -- Class name
+        local className = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        className:SetPoint("LEFT", classIcon, "RIGHT", 6, 0)
+        className:SetWidth(70)
+        className:SetJustifyH("LEFT")
+        local localizedName = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class] or class
+        className:SetText(localizedName)
+
+        -- Blessing icon (clickable area)
+        local blessingIcon = row:CreateTexture(nil, "ARTWORK")
+        blessingIcon:SetSize(ICON_SIZE, ICON_SIZE)
+        blessingIcon:SetPoint("LEFT", row, "LEFT", 100, 0)
+        blessingIcon:SetTexture("Interface\\ICONS\\INV_Misc_QuestionMark")
+        blessingIcon:SetDesaturated(true)
+        row.blessingIcon = blessingIcon
+
+        -- Blessing name
+        local blessingText = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        blessingText:SetPoint("LEFT", blessingIcon, "RIGHT", 6, 0)
+        blessingText:SetWidth(rowWidth - 130)
+        blessingText:SetJustifyH("LEFT")
+        blessingText:SetWordWrap(false)
+        blessingText:SetText("None")
+        blessingText:SetTextColor(0.5, 0.5, 0.5)
+        row.blessingText = blessingText
+
+        -- Highlight on hover
+        local highlight = row:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetAllPoints()
+        highlight:SetColorTexture(1, 1, 1, 0.05)
+
+        row:SetScript("OnClick", function()
+            CycleBlessing(class)
+            UpdateRowVisual(row, class)
+        end)
+
+        row:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(localizedName, 1, 1, 1)
+            local assignedType = PaladinToolsDB.blessingAssignments[class]
+            if assignedType then
+                local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
+                if spellData then
+                    GameTooltip:AddLine("Assigned: " .. spellData.name, 0.2, 1, 0.2)
+                end
+            else
+                GameTooltip:AddLine("No blessing assigned", 0.5, 0.5, 0.5)
+            end
+            GameTooltip:AddLine("Click to cycle blessing", 0.7, 0.7, 0.7)
+            GameTooltip:Show()
+        end)
+        row:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+
+        UpdateRowVisual(row, class)
+        classRows[class] = row
+
+        y = y - ROW_HEIGHT
+    end
+
+    -- Clear All button
+    y = y - 8
+    local clearBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    clearBtn:SetSize(100, 22)
+    clearBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, y)
+    clearBtn:SetText("Clear All")
+    clearBtn:SetNormalFontObject("GameFontNormalSmall")
+    clearBtn:SetScript("OnClick", function()
+        wipe(PaladinToolsDB.blessingAssignments)
+        for class, row in pairs(classRows) do
+            UpdateRowVisual(row, class)
+        end
+        local pm = PT.modules["PopupMenu"]
+        if pm then
+            if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
+            if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
+        end
+    end)
+
+    y = y - 30
+
+    parent:SetHeight(math.abs(y) + 8)
+end
+
 local categoryDefs = {
     { name = "General",      builder = BuildGeneralContent },
+    { name = "Blessings",    builder = BuildBlessingsContent },
     { name = "Buff Helper",  builder = BuildBuffContent },
     { name = "Appearance",   builder = BuildAppearanceContent },
 }
@@ -550,7 +741,7 @@ local function CreateOptionsFrame()
     local closeBtn = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     closeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -2, -2)
 
-    BuildOptionsLayout(f, -36, FRAME_WIDTH - 36)
+    optionsLayout = BuildOptionsLayout(f, -36, FRAME_WIDTH - 36)
 
     return f
 end
@@ -559,22 +750,33 @@ end
 -- Public API
 --------------------------------------------------------------------------------
 
-function OPT:Toggle()
+function OPT:Toggle(tabIndex)
     if not optionsFrame then
         optionsFrame = CreateOptionsFrame()
     end
-    if optionsFrame:IsShown() then
+    if optionsFrame:IsShown() and not tabIndex then
         optionsFrame:Hide()
     else
         optionsFrame:Show()
+        if tabIndex and optionsLayout and optionsLayout.ShowCategory then
+            optionsLayout.ShowCategory(tabIndex)
+        end
     end
 end
 
-function OPT:Show()
+function OPT:Show(tabIndex)
     if not optionsFrame then
         optionsFrame = CreateOptionsFrame()
     end
     optionsFrame:Show()
+    if tabIndex and optionsLayout and optionsLayout.ShowCategory then
+        optionsLayout.ShowCategory(tabIndex)
+    end
+end
+
+-- Open directly to the Blessings Manager tab
+function OPT:ShowBlessings()
+    self:Show(2)  -- Blessings is the 2nd tab
 end
 
 function OPT:Hide()

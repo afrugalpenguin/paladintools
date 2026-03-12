@@ -2,7 +2,7 @@ local PT = PaladinTools
 local Tour = {}
 PT:RegisterModule("Tour", Tour)
 
-local TOUR_VERSION = 3
+local TOUR_VERSION = 4
 
 -- Style constants (matches Options.lua / WhatsNew.lua)
 local BG_COLOR = { 0.08, 0.08, 0.12, 0.98 }
@@ -160,7 +160,7 @@ end
 local steps = {
     {
         title = "The HUD",
-        desc = "This is your HUD \226\128\148 it shows your reagent counts (Symbol of Kings and Symbol of Divinity) at a glance.",
+        desc = "This is your HUD \226\128\148 it shows your reagent counts (Symbol of Kings and Symbol of Divinity) at a glance. Drag it anywhere on screen.",
         setup = function()
             local hud = PaladinToolsHUD
             if hud and not hud:IsShown() then hud:Show() end
@@ -169,8 +169,21 @@ local steps = {
         teardown = function() end,
     },
     {
+        title = "Blessings Manager",
+        desc = "Set your default blessing for each class here. These assignments persist across sessions \226\128\148 set them once and they stay. Click any class row to cycle through your known Greater Blessings. Open anytime with /pt or /pt manager.",
+        setup = function()
+            local opts = PT.modules["Options"]
+            if opts then opts:ShowBlessings() end
+            return PaladinToolsOptions
+        end,
+        teardown = function()
+            local opts = PT.modules["Options"]
+            if opts then opts:Hide() end
+        end,
+    },
+    {
         title = "The Popup Menu",
-        desc = "This is the spell popup \226\128\148 use it to quickly cast blessings, auras, and seals. Bind a key in Options to open it.",
+        desc = "This is the spell popup \226\128\148 use it to quickly cast blessings, auras, and seals. Bind a key in Options to open it instantly.",
         setup = function()
             local popup = PaladinToolsPopup
             if not popup then return nil end
@@ -194,8 +207,8 @@ local steps = {
         end,
     },
     {
-        title = "Blessing Manager",
-        desc = "The top row is your Blessings Manager \226\128\148 one button per class in your group. Right-click to cycle through Greater Blessings, left-click to cast. The timer overlay shows remaining buff duration. Class icons sit above each button.",
+        title = "Quick Blessing Grid",
+        desc = "The top-right of the popup is your casting grid \226\128\148 one button per class in your group. It uses your saved assignments from the Blessings Manager. Right-click to change on the fly, left-click to cast. The timer overlay shows remaining buff duration.",
         setup = function()
             -- Enable fake party so the grid is populated during the tour
             if SlashCmdList["FAKEPARTY"] then
