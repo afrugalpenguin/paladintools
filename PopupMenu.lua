@@ -14,6 +14,18 @@ local function FindSpellInBook(targetName)
     return PT:FindSpellInBook(targetName)
 end
 
+-- Returns true if the player has any points in Improved Righteous Fury (Protection tab)
+function PM:HasImprovedRF()
+    local PROT_TAB = 2
+    for i = 1, GetNumTalents(PROT_TAB) do
+        local name, _, _, _, rank = GetTalentInfo(PROT_TAB, i)
+        if name == "Improved Righteous Fury" then
+            return rank and rank > 0
+        end
+    end
+    return false
+end
+
 -- Binding header and name (for Key Bindings UI)
 BINDING_HEADER_PALADINTOOLS = "PaladinTools"
 BINDING_NAME_PALADINTOOLS_POPUP = "Toggle Spell Menu"
@@ -645,6 +657,8 @@ function PM:BuildButtons()
     local spacing = btnSize + BUTTON_PADDING
     local maxAbsX = 0
     local maxAbsY = 0
+    local showRF = PM:HasImprovedRF() and FindSpellInBook(PT.RIGHTEOUS_FURY.name)
+    local centerGap = showRF and (btnSize / 2 + BUTTON_PADDING) or BLOCK_GAP
 
     local LABEL_GAP = 2
 
@@ -662,17 +676,17 @@ function PM:BuildButtons()
 
                 local bx, by
                 if g.pos == "topleft" then
-                    bx = -BLOCK_GAP - blockW + col * spacing + btnSize / 2
-                    by = BLOCK_GAP + blockH - row * spacing - btnSize / 2
+                    bx = -centerGap - blockW + col * spacing + btnSize / 2
+                    by = centerGap + blockH - row * spacing - btnSize / 2
                 elseif g.pos == "topright" then
-                    bx = BLOCK_GAP + col * spacing + btnSize / 2
-                    by = BLOCK_GAP + blockH - row * spacing - btnSize / 2
+                    bx = centerGap + col * spacing + btnSize / 2
+                    by = centerGap + blockH - row * spacing - btnSize / 2
                 elseif g.pos == "bottomleft" then
-                    bx = -BLOCK_GAP - blockW + col * spacing + btnSize / 2
-                    by = -BLOCK_GAP - row * spacing - btnSize / 2
+                    bx = -centerGap - blockW + col * spacing + btnSize / 2
+                    by = -centerGap - row * spacing - btnSize / 2
                 else -- bottomright
-                    bx = BLOCK_GAP + col * spacing + btnSize / 2
-                    by = -BLOCK_GAP - row * spacing - btnSize / 2
+                    bx = centerGap + col * spacing + btnSize / 2
+                    by = -centerGap - row * spacing - btnSize / 2
                 end
 
                 btn:ClearAllPoints()
@@ -696,19 +710,33 @@ function PM:BuildButtons()
             lbl:SetTextColor(0.96, 0.55, 0.73, 0.8)  -- Paladin pink
 
             if g.pos == "topleft" then
-                lbl:SetPoint("BOTTOMRIGHT", popup, "CENTER", -BLOCK_GAP, BLOCK_GAP + blockH + LABEL_GAP)
+                lbl:SetPoint("BOTTOMRIGHT", popup, "CENTER", -centerGap, centerGap + blockH + LABEL_GAP)
             elseif g.pos == "topright" then
-                lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", BLOCK_GAP, BLOCK_GAP + blockH + LABEL_GAP)
+                lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", centerGap, centerGap + blockH + LABEL_GAP)
             elseif g.pos == "bottomleft" then
-                lbl:SetPoint("TOPRIGHT", popup, "CENTER", -BLOCK_GAP, -BLOCK_GAP - blockH - LABEL_GAP)
+                lbl:SetPoint("TOPRIGHT", popup, "CENTER", -centerGap, -centerGap - blockH - LABEL_GAP)
             else -- bottomright
-                lbl:SetPoint("TOPLEFT", popup, "CENTER", BLOCK_GAP, -BLOCK_GAP - blockH - LABEL_GAP)
+                lbl:SetPoint("TOPLEFT", popup, "CENTER", centerGap, -centerGap - blockH - LABEL_GAP)
             end
 
             tinsert(labels, lbl)
 
-            local labelEdgeY = BLOCK_GAP + blockH + LABEL_GAP + 12
+            local labelEdgeY = centerGap + blockH + LABEL_GAP + 12
             if labelEdgeY > maxAbsY then maxAbsY = labelEdgeY end
+        end
+    end
+
+    -- Righteous Fury (center of X layout, shown if Improved RF is talented)
+    if PM:HasImprovedRF() then
+        local rfSpell = PT.RIGHTEOUS_FURY
+        local rfId = FindSpellInBook(rfSpell.name)
+        if rfId then
+            local btn = CreateSpellButton({ spellID = rfId }, "RF", 1)
+            btn:ClearAllPoints()
+            btn:SetPoint("CENTER", popup, "CENTER", 0, 0)
+            local edgeHalf = btnSize / 2
+            if edgeHalf > maxAbsX then maxAbsX = edgeHalf end
+            if edgeHalf > maxAbsY then maxAbsY = edgeHalf end
         end
     end
 
@@ -729,13 +757,13 @@ function PM:BuildButtons()
     end
 
     -- Align class grid button centers with the blessings row
-    local gridBtnY = BLOCK_GAP + gridSpacing - gridBtnSize / 2
+    local gridBtnY = centerGap + gridSpacing - gridBtnSize / 2
 
     for gridIndex, class in ipairs(gridClasses) do
         local row = CreateClassGridRow(class)
         classGridButtons[class] = row
 
-        local bx = BLOCK_GAP + (gridIndex - 1) * gridSpacing + gridBtnSize / 2
+        local bx = centerGap + (gridIndex - 1) * gridSpacing + gridBtnSize / 2
         local by = gridBtnY
 
         row.btn:ClearAllPoints()
@@ -753,7 +781,7 @@ function PM:BuildButtons()
         lbl:SetText("Blessings Manager")
         lbl:SetTextColor(0.96, 0.55, 0.73, 0.8)
         local gridTop = gridBtnY + gridBtnSize / 2 + CLASS_ICON_SIZE + 2
-        lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", BLOCK_GAP, gridTop + LABEL_GAP)
+        lbl:SetPoint("BOTTOMLEFT", popup, "CENTER", centerGap, gridTop + LABEL_GAP)
         tinsert(labels, lbl)
 
         local labelEdgeY = gridTop + LABEL_GAP + 12

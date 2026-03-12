@@ -43,6 +43,8 @@ read_globals = {
     "GetSpellBookItemName",
     "GetSpellBookItemInfo",
     "IsSpellKnown",
+    "GetNumTalents",
+    "GetTalentInfo",
     "GetItemIcon",
     "GetItemCount",
     "GetNumGroupMembers",

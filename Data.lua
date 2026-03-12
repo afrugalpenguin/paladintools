@@ -44,6 +44,9 @@ PT.SEALS = {
     { spellID = 31801, name = "Seal of Vengeance",      faction = "Alliance" },
 }
 
+-- Righteous Fury (self-buff, shown for Prot spec)
+PT.RIGHTEOUS_FURY = { spellID = 25780, name = "Righteous Fury" }
+
 -- Judgement spell
 PT.JUDGEMENT_SPELL = 20271
 
