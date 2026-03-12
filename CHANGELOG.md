@@ -1,5 +1,15 @@
 # Changelog
 
+**v2.0.0**
+- New: PallyPower-inspired Blessings Manager — dedicated Options tab to assign Greater Blessings per class, persists across sessions
+- New: /pt now opens the Blessings Manager by default, /pt manager as shortcut
+- New: /pt help command lists all available commands
+- New: Tour step for the Blessings Manager
+- Improved: Popup class grid uses spellbook lookups for reliable spell icons and casting (fixes blank icons on cold login)
+- Improved: Popup rebuilds on show to clear stale group members
+- Improved: Class icon coordinates use WoW's CLASS_ICON_TCOORDS when available
+- Fixed: Options Blessings tab now only shows blessings you actually know
+
 **v1.1.1**
 - Fixed HUD buttons invisible when item icon isn't cached (Symbol of Divinity)
 - Added amber/red border highlights to Blessings Manager buttons based on remaining buff duration

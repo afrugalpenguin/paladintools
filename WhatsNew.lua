@@ -6,6 +6,20 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "2.0.0",
+        features = {
+            "PallyPower-inspired Blessings Manager — assign Greater Blessings per class in a dedicated Options tab",
+            "/pt now opens the Blessings Manager by default",
+            "/pt help command for quick reference",
+            "Tour updated with Blessings Manager walkthrough",
+        },
+        fixes = {
+            "Popup class grid no longer shows blank icons on cold login",
+            "Popup rebuilds on show to clear stale group members",
+            "Options only shows blessings you actually know in your spellbook",
+        },
+    },
+    {
         version = "1.1.1",
         features = {
             "Amber/red border highlights on Blessings Manager buttons when buffs are expiring",
