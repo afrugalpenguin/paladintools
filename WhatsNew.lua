@@ -6,6 +6,14 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "2.1.0",
+        features = {
+            "Righteous Fury button in the center of the spell popup for Prot paladins",
+            "Popup quadrants dynamically space out when RF button is shown",
+        },
+        fixes = {},
+    },
+    {
         version = "2.0.0",
         features = {
             "PallyPower-inspired Blessings Manager — assign Greater Blessings per class in a dedicated Options tab",

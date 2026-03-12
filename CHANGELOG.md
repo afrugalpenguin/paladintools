@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.1.0**
+- New: Righteous Fury button in the center of the spell popup for Prot paladins (requires Improved Righteous Fury talent)
+- Improved: Popup quadrants dynamically space out to accommodate the center RF button
+
 **v2.0.0**
 - New: PallyPower-inspired Blessings Manager — dedicated Options tab to assign Greater Blessings per class, persists across sessions
 - New: /pt now opens the Blessings Manager by default, /pt manager as shortcut
