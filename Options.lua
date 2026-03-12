@@ -434,16 +434,12 @@ local function BuildBlessingsContent(parent)
         "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR",
     }
 
-    -- Scan which Greater Blessings the player knows
+    -- Scan which Greater Blessings the player actually knows (spellbook check)
     local knownGreaters = {}
     for _, bType in ipairs(PT.BLESSING_CYCLE_ORDER) do
         local spellData = PT.GREATER_BLESSING_BY_TYPE[bType]
-        if spellData then
-            -- Use GetSpellInfo to check if the player knows the spell
-            local spellName = GetSpellInfo(spellData.spellID)
-            if spellName then
-                tinsert(knownGreaters, bType)
-            end
+        if spellData and PT:FindSpellInBook(spellData.name) then
+            tinsert(knownGreaters, bType)
         end
     end
 
@@ -457,8 +453,9 @@ local function BuildBlessingsContent(parent)
         if assignedType then
             local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
             if spellData then
-                local spellName, _, icon = GetSpellInfo(spellData.spellID)
-                row.blessingIcon:SetTexture(icon)
+                local bookID = PT:FindSpellInBook(spellData.name)
+                local spellName, _, icon = GetSpellInfo(bookID or spellData.spellID)
+                row.blessingIcon:SetTexture(icon or "Interface\\ICONS\\INV_Misc_QuestionMark")
                 row.blessingIcon:SetDesaturated(false)
                 row.blessingText:SetText(spellName or spellData.name)
                 row.blessingText:SetTextColor(1, 1, 1)

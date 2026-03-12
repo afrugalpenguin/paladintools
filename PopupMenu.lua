@@ -11,18 +11,7 @@ local BLOCK_COLS = 99  -- no wrapping, each category stays on one row
 
 -- Scan the spellbook for the highest rank of a spell by name
 local function FindSpellInBook(targetName)
-    local foundID
-    local i = 1
-    while true do
-        local name = GetSpellBookItemName(i, BOOKTYPE_SPELL)
-        if not name then break end
-        if name == targetName then
-            local _, id = GetSpellBookItemInfo(i, BOOKTYPE_SPELL)
-            foundID = id  -- last match = highest rank
-        end
-        i = i + 1
-    end
-    return foundID
+    return PT:FindSpellInBook(targetName)
 end
 
 -- Binding header and name (for Key Bindings UI)
@@ -150,6 +139,12 @@ function PM:CreatePopup()
 
     -- Register popup as a frame ref so secure handlers can Show/Hide/position it
     SecureHandlerSetFrameRef(toggleBtn, "popup", popup)
+
+    popup:SetScript("OnShow", function()
+        if not InCombatLockdown() then
+            PM:BuildButtons()
+        end
+    end)
 
     popup:SetScript("OnHide", function()
         if not InCombatLockdown() then
@@ -496,12 +491,20 @@ function PM:UpdateClassGridAttributes()
         if assignedType then
             local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
             if spellData then
-                local spellName = GetSpellInfo(spellData.spellID)
-                row.btn:SetAttribute("type", "spell")
-                row.btn:SetAttribute("spell", spellName)
-                local units = classRoster[class]
-                if units and units[1] then
-                    row.btn:SetAttribute("unit", units[1])
+                -- Use spellbook lookup for reliable spell name (immune to cold cache)
+                local bookID = FindSpellInBook(spellData.name)
+                local spellName = bookID and GetSpellInfo(bookID) or GetSpellInfo(spellData.spellID)
+                if spellName then
+                    row.btn:SetAttribute("type", "spell")
+                    row.btn:SetAttribute("spell", spellName)
+                    local units = classRoster[class]
+                    if units and units[1] then
+                        row.btn:SetAttribute("unit", units[1])
+                    end
+                else
+                    row.btn:SetAttribute("type", nil)
+                    row.btn:SetAttribute("spell", nil)
+                    row.btn:SetAttribute("unit", nil)
                 end
             end
         else
@@ -519,8 +522,10 @@ function PM:UpdateClassGridVisuals()
         if assignedType then
             local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
             if spellData then
-                local _, _, icon = GetSpellInfo(spellData.spellID)
-                row.icon:SetTexture(icon)
+                -- Use spellbook lookup for reliable icon (immune to cold cache)
+                local bookID = FindSpellInBook(spellData.name)
+                local _, _, icon = GetSpellInfo(bookID or spellData.spellID)
+                row.icon:SetTexture(icon or "Interface\\ICONS\\INV_Misc_QuestionMark")
             end
         else
             row.icon:SetTexture("Interface\\ICONS\\INV_Misc_QuestionMark")

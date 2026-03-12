@@ -17,6 +17,22 @@ function PaladinTools:PropagateDrag(child)
     end)
 end
 
+-- Scan the spellbook for the highest rank of a spell by name
+function PaladinTools:FindSpellInBook(targetName)
+    local foundID
+    local i = 1
+    while true do
+        local name = GetSpellBookItemName(i, BOOKTYPE_SPELL)
+        if not name then break end
+        if name == targetName then
+            local _, id = GetSpellBookItemInfo(i, BOOKTYPE_SPELL)
+            foundID = id  -- last match = highest rank
+        end
+        i = i + 1
+    end
+    return foundID
+end
+
 local frame = CreateFrame("Frame")
 
 local defaults = {

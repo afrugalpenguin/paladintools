@@ -61,8 +61,8 @@ PT.TRACKED_ITEM_SET = {}
 PT.TRACKED_ITEM_SET[PT.SYMBOL_OF_KINGS] = "symbolOfKings"
 PT.TRACKED_ITEM_SET[PT.SYMBOL_OF_DIVINITY] = "symbolOfDivinity"
 
--- Class icon atlas: Interface\GLUES\CHARACTERCREATE\UI-CharacterCreate-Classes
-PT.CLASS_ICON_COORDS = {
+-- Class icon atlas: use WoW global if available, fall back to hardcoded
+PT.CLASS_ICON_COORDS = CLASS_ICON_TCOORDS or {
     WARRIOR     = { 0.00, 0.25, 0.00, 0.25 },
     MAGE        = { 0.25, 0.50, 0.00, 0.25 },
     ROGUE       = { 0.50, 0.75, 0.00, 0.25 },
