@@ -550,7 +550,6 @@ local function BuildBlessingsContent(parent)
     local function CleanupGrid()
         for _, elem in ipairs(gridElements) do
             elem:Hide()
-            elem:SetParent(nil)
         end
         wipe(gridElements)
     end
@@ -560,37 +559,60 @@ local function BuildBlessingsContent(parent)
         return elem
     end
 
+    -- Static UI: opt-in checkbox (created once)
+    local staticY = -8
+    local optInCB = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+    optInCB:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, staticY)
+    local cbText = optInCB.text or (optInCB.GetName and optInCB:GetName() and _G[optInCB:GetName() .. "Text"])
+    if cbText then
+        cbText:SetText("Allow others to set my blessings")
+        cbText:SetFontObject("GameFontHighlight")
+    else
+        local text = optInCB:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        text:SetPoint("LEFT", optInCB, "RIGHT", 4, 0)
+        text:SetText("Allow others to set my blessings")
+    end
+    optInCB:SetChecked(PaladinToolsDB.acceptRemoteAssignments)
+    optInCB:SetScript("OnClick", function(self)
+        PaladinToolsDB.acceptRemoteAssignments = not not self:GetChecked()
+    end)
+    staticY = staticY - 28
+
+    -- Static UI: header separator (created once)
+    local headerLine = parent:CreateTexture(nil, "ARTWORK")
+    headerLine:SetHeight(1)
+    headerLine:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, staticY - 2)
+    headerLine:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -8, staticY - 2)
+    headerLine:SetColorTexture(ACCENT_COLOR[1], ACCENT_COLOR[2], ACCENT_COLOR[3], 0.4)
+
+    -- Y offset where the dynamic grid starts
+    local GRID_START_Y = staticY - 6
+
+    -- Static UI: Clear All button (created once, repositioned on rebuild)
+    local clearBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    clearBtn:SetSize(100, 22)
+    clearBtn:SetText("Clear All")
+    clearBtn:SetNormalFontObject("GameFontNormalSmall")
+    clearBtn:SetScript("OnClick", function()
+        wipe(PaladinToolsDB.blessingAssignments)
+        local pm = PT.modules["PopupMenu"]
+        if pm then
+            if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
+            if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
+        end
+        local bsync = PT.modules["BlessingSync"]
+        if bsync then bsync:BroadcastThrottled() end
+        parent:RebuildGrid()
+    end)
+
     function parent:RebuildGrid()
         CleanupGrid()
 
-        local y = -8
-        local myName = UnitName("player")
-
-        -- Opt-in checkbox
-        local optInCB = TrackElement(CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate"))
-        optInCB:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y)
-        local cbText = optInCB.text or (optInCB.GetName and optInCB:GetName() and _G[optInCB:GetName() .. "Text"])
-        if cbText then
-            cbText:SetText("Allow others to set my blessings")
-            cbText:SetFontObject("GameFontHighlight")
-        else
-            local text = TrackElement(optInCB:CreateFontString(nil, "OVERLAY", "GameFontHighlight"))
-            text:SetPoint("LEFT", optInCB, "RIGHT", 4, 0)
-            text:SetText("Allow others to set my blessings")
-        end
+        -- Sync checkbox state
         optInCB:SetChecked(PaladinToolsDB.acceptRemoteAssignments)
-        optInCB:SetScript("OnClick", function(self)
-            PaladinToolsDB.acceptRemoteAssignments = not not self:GetChecked()
-        end)
-        y = y - 28
 
-        -- Header separator
-        local headerLine = TrackElement(parent:CreateTexture(nil, "ARTWORK"))
-        headerLine:SetHeight(1)
-        headerLine:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y - 2)
-        headerLine:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -8, y - 2)
-        headerLine:SetColorTexture(ACCENT_COLOR[1], ACCENT_COLOR[2], ACCENT_COLOR[3], 0.4)
-        y = y - 6
+        local y = GRID_START_Y
+        local myName = UnitName("player")
 
         -- Column headers: blank space for name column, then class icons
         local headerFrame = TrackElement(CreateFrame("Frame", nil, parent))
@@ -645,7 +667,10 @@ local function BuildBlessingsContent(parent)
             nameLabel:SetWidth(NAME_COL_WIDTH - 4)
             nameLabel:SetJustifyH("LEFT")
             nameLabel:SetWordWrap(false)
-            nameLabel:SetText("|cffF58CBA" .. paladinName .. "|r")
+            local displayName = isLocal
+                and ("|cffF58CBA" .. paladinName .. " (You)|r")
+                or ("|cffF58CBA" .. paladinName .. "|r")
+            nameLabel:SetText(displayName)
 
             -- Lock icon for non-editable remote paladins
             if not isLocal and not hasLeaderPerm then
@@ -730,24 +755,11 @@ local function BuildBlessingsContent(parent)
             y = y - ROW_HEIGHT
         end
 
-        -- Clear All button (local row only)
+        -- Reposition Clear All button
         y = y - 8
-        local clearBtn = TrackElement(CreateFrame("Button", nil, parent, "UIPanelButtonTemplate"))
-        clearBtn:SetSize(100, 22)
+        clearBtn:ClearAllPoints()
         clearBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, y)
-        clearBtn:SetText("Clear All")
-        clearBtn:SetNormalFontObject("GameFontNormalSmall")
-        clearBtn:SetScript("OnClick", function()
-            wipe(PaladinToolsDB.blessingAssignments)
-            local pm = PT.modules["PopupMenu"]
-            if pm then
-                if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
-                if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
-            end
-            local bsync = PT.modules["BlessingSync"]
-            if bsync then bsync:BroadcastThrottled() end
-            parent:RebuildGrid()
-        end)
+        clearBtn:Show()
 
         y = y - 30
 
