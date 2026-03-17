@@ -248,6 +248,34 @@ SlashCmdList["FAKEPALADINS"] = function(msg)
     ToggleFakePaladins(strtrim(msg))
 end
 
+SLASH_FAKESYNC1 = "/fakesync"
+SlashCmdList["FAKESYNC"] = function(msg)
+    msg = strtrim(msg)
+    if msg == "" then
+        print("|cffF58CBAPaladinTools|r /fakesync usage:")
+        print("  /fakesync ASSIGN:Name:CLASS=type,CLASS=type")
+        print("  /fakesync OVERRIDE:Name:CLASS=type,CLASS=type")
+        print("  /fakesync SYNC")
+        return
+    end
+
+    local sender = "FakeSender"
+    local _, name = msg:match("^(%u+):([^:]+)")
+    if name and msg:match("^ASSIGN") then
+        sender = name
+    end
+
+    print("|cffF58CBAPaladinTools|r Injecting fake message: " .. msg)
+    print("  Sender: " .. sender)
+
+    local bs = PaladinTools.modules["BlessingSync"]
+    if bs then
+        bs:HandleAddonMessage("PTools", msg, "RAID", sender)
+    else
+        print("  |cffff0000ERROR: BlessingSync module not loaded|r")
+    end
+end
+
 SLASH_FAKERAID1 = "/fakeraid"
 SlashCmdList["FAKERAID"] = function() Toggle("raid") end
 
