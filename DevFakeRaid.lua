@@ -36,6 +36,32 @@ local PARTY_BUFFS = {
     [3] = { elapsed = 0.70 },  -- MAGE: 70% elapsed
 }
 
+local FAKE_PALADINS = {
+    {
+        name = "Holypal",
+        assignments = { WARRIOR = "might", PRIEST = "wisdom", MAGE = "wisdom",
+                        WARLOCK = "wisdom", HUNTER = "might", DRUID = "might" },
+        acceptRemote = true,
+        isAssist = true,
+    },
+    {
+        name = "Bubbleboy",
+        assignments = { WARRIOR = "salvation", ROGUE = "might", SHAMAN = "kings",
+                        PALADIN = "kings" },
+        acceptRemote = true,
+        isAssist = false,
+    },
+    {
+        name = "Lightlady",
+        assignments = { WARRIOR = "kings", MAGE = "kings", PRIEST = "sanctuary",
+                        DRUID = "kings", HUNTER = "kings" },
+        acceptRemote = false,
+        isAssist = false,
+    },
+}
+
+local fakePaladinsActive = false
+
 local mode = nil  -- nil, "raid", or "party"
 local fakeStartTime = 0
 
@@ -183,6 +209,43 @@ local function Toggle(newMode)
         end
     end
     Rebuild()
+end
+
+local function ToggleFakePaladins(countStr)
+    local count = tonumber(countStr) or 2
+    count = math.min(count, #FAKE_PALADINS)
+
+    if fakePaladinsActive then
+        for _, pal in ipairs(FAKE_PALADINS) do
+            PaladinTools.syncState[pal.name] = nil
+        end
+        fakePaladinsActive = false
+        print("|cffF58CBAPaladinTools|r Fake paladins |cffff0000DISABLED|r")
+    else
+        for i = 1, count do
+            local pal = FAKE_PALADINS[i]
+            PaladinTools.syncState[pal.name] = {}
+            for k, v in pairs(pal.assignments) do
+                PaladinTools.syncState[pal.name][k] = v
+            end
+        end
+        fakePaladinsActive = true
+        print("|cffF58CBAPaladinTools|r Fake paladins |cff00ff00ENABLED|r — " .. count .. " paladins added")
+        for i = 1, count do
+            local pal = FAKE_PALADINS[i]
+            local status = pal.acceptRemote and "|cff00ff00accepts remote|r" or "|cffff0000locked|r"
+            local role = pal.isAssist and " (assist)" or ""
+            print("  " .. pal.name .. role .. " — " .. status)
+        end
+    end
+
+    local bs = PaladinTools.modules["BlessingSync"]
+    if bs and bs.RefreshUI then bs:RefreshUI() end
+end
+
+SLASH_FAKEPALADINS1 = "/fakepaladins"
+SlashCmdList["FAKEPALADINS"] = function(msg)
+    ToggleFakePaladins(strtrim(msg))
 end
 
 SLASH_FAKERAID1 = "/fakeraid"
