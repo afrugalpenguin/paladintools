@@ -11,6 +11,7 @@ Core.lua
 WhatsNew.lua
 Options.lua
 Data.lua
+BlessingSync.lua
 DevFakeRaid.lua
 MasqueHelper.lua
 PopupMenu.lua
