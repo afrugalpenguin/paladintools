@@ -494,6 +494,8 @@ function PM:CycleBlessing(class)
     ScanBlessings()
     self:UpdateClassGridAttributes()
     self:UpdateClassGridVisuals()
+    local bs = PT.modules["BlessingSync"]
+    if bs then bs:BroadcastThrottled() end
 end
 
 function PM:UpdateClassGridAttributes()

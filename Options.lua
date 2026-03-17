@@ -492,6 +492,8 @@ local function BuildBlessingsContent(parent)
             if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
             if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
         end
+        local bs = PT.modules["BlessingSync"]
+        if bs then bs:BroadcastThrottled() end
     end
 
     for _, class in ipairs(CLASS_ORDER) do
@@ -589,6 +591,8 @@ local function BuildBlessingsContent(parent)
             if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
             if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
         end
+        local bs = PT.modules["BlessingSync"]
+        if bs then bs:BroadcastThrottled() end
     end)
 
     y = y - 30
