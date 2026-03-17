@@ -2,6 +2,7 @@ PaladinTools = {}
 PaladinTools.modules = {}
 PaladinTools.version = "2.1.0"
 PaladinTools.initialized = false
+PaladinTools.syncState = {}
 
 -- Make a child frame propagate drag events to its movable parent
 function PaladinTools:PropagateDrag(child)
@@ -56,6 +57,7 @@ local defaults = {
     popupReleaseMode = true,
     popupCategories = { blessings = true, auras = true, seals = true },
     blessingAssignments = {},
+    acceptRemoteAssignments = true,
 }
 
 function PaladinTools:RegisterModule(name, mod)
@@ -96,6 +98,7 @@ frame:SetScript("OnEvent", function(self, event, ...)
                 return
             end
             PaladinTools:InitDB()
+            C_ChatInfo.RegisterAddonMessagePrefix("PTools")
             PaladinTools.Masque:Init()
             for name, mod in pairs(PaladinTools.modules) do
                 if mod.Init then
@@ -103,6 +106,8 @@ frame:SetScript("OnEvent", function(self, event, ...)
                 end
             end
             PaladinTools.initialized = true
+            self:RegisterEvent("CHAT_MSG_ADDON")
+            self:RegisterEvent("GROUP_ROSTER_UPDATE")
             self:UnregisterEvent("ADDON_LOADED")
         end
         return
