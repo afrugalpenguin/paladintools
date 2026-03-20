@@ -3,6 +3,7 @@ PaladinTools.modules = {}
 PaladinTools.version = "3.0.0"
 PaladinTools.initialized = false
 PaladinTools.syncState = {}
+PaladinTools.syncAcceptRemote = {}
 
 -- Make a child frame propagate drag events to its movable parent
 function PaladinTools:PropagateDrag(child)

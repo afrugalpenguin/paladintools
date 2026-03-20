@@ -575,6 +575,8 @@ local function BuildBlessingsContent(parent)
     optInCB:SetChecked(PaladinToolsDB.acceptRemoteAssignments)
     optInCB:SetScript("OnClick", function(self)
         PaladinToolsDB.acceptRemoteAssignments = not not self:GetChecked()
+        local bsync = PT.modules["BlessingSync"]
+        if bsync then bsync:BroadcastThrottled() end
     end)
     staticY = staticY - 28
 
@@ -654,7 +656,8 @@ local function BuildBlessingsContent(parent)
         -- Build rows
         for _, paladinName in ipairs(paladinOrder) do
             local isLocal = (paladinName == myName)
-            local canEdit = isLocal or hasLeaderPerm
+            local targetAcceptsRemote = PT.syncAcceptRemote[paladinName]
+            local canEdit = isLocal or (hasLeaderPerm and targetAcceptsRemote)
             local assignments = GetAssignments(paladinName)
 
             local rowFrame = TrackElement(CreateFrame("Frame", nil, parent))
@@ -667,18 +670,16 @@ local function BuildBlessingsContent(parent)
             nameLabel:SetWidth(NAME_COL_WIDTH - 4)
             nameLabel:SetJustifyH("LEFT")
             nameLabel:SetWordWrap(false)
-            local displayName = isLocal
-                and ("|cffF58CBA" .. paladinName .. " (You)|r")
-                or ("|cffF58CBA" .. paladinName .. "|r")
-            nameLabel:SetText(displayName)
-
-            -- Lock icon for non-editable remote paladins
-            if not isLocal and not hasLeaderPerm then
-                local lockIcon = TrackElement(rowFrame:CreateTexture(nil, "OVERLAY"))
-                lockIcon:SetSize(12, 12)
-                lockIcon:SetPoint("LEFT", nameLabel, "RIGHT", 0, 0)
-                lockIcon:SetTexture("Interface\\LFGFRAME\\UI-LFG-ICON-LOCK")
+            local lockTex = "|TInterface\\LFGFRAME\\UI-LFG-ICON-LOCK:14|t"
+            local displayName
+            if isLocal then
+                displayName = "|cffF58CBA" .. paladinName .. " (You)|r"
+            elseif not canEdit then
+                displayName = lockTex .. " |cffF58CBA" .. paladinName .. "|r"
+            else
+                displayName = "|cffF58CBA" .. paladinName .. "|r"
             end
+            nameLabel:SetText(displayName)
 
             -- One cell per class
             for ci, class in ipairs(CLASS_ORDER) do

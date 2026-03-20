@@ -38,9 +38,10 @@ function BS:ParseAssignments(str)
     return assignments
 end
 
--- Build a full message string
-function BS:BuildAssignMessage(playerName, assignments)
-    return "ASSIGN:" .. playerName .. ":" .. self:SerializeAssignments(assignments)
+-- Build a full message string (includes acceptRemote flag)
+function BS:BuildAssignMessage(playerName, assignments, acceptRemote)
+    local flag = acceptRemote and "1" or "0"
+    return "ASSIGN:" .. playerName .. ":" .. flag .. ":" .. self:SerializeAssignments(assignments)
 end
 
 function BS:BuildOverrideMessage(targetName, assignments)
@@ -52,17 +53,22 @@ function BS:BuildSyncMessage()
 end
 
 -- Parse any incoming message
--- Returns: msgType, name, assignments
+-- Returns: msgType, name, assignments, acceptRemote
 function BS:ParseMessage(text)
     if text == "SYNC" then
-        return "SYNC", nil, nil
+        return "SYNC", nil, nil, nil
     end
 
-    local msgType, name, data = text:match("^(%u+):([^:]+):(.*)$")
-    if not msgType then return nil end
+    -- ASSIGN has 4 colon-separated fields: ASSIGN:name:flag:data
+    local assignType, aName, flag, aData = text:match("^(ASSIGN):([^:]+):([01]):(.*)$")
+    if assignType then
+        return "ASSIGN", aName, self:ParseAssignments(aData), flag == "1"
+    end
 
-    if msgType == "ASSIGN" or msgType == "OVERRIDE" then
-        return msgType, name, self:ParseAssignments(data)
+    -- OVERRIDE has 3 colon-separated fields: OVERRIDE:name:data
+    local overType, oName, oData = text:match("^(OVERRIDE):([^:]+):(.*)$")
+    if overType then
+        return "OVERRIDE", oName, self:ParseAssignments(oData), nil
     end
 
     return nil
@@ -72,17 +78,19 @@ end
 function BS:BroadcastAssignments()
     local name = UnitName("player")
     local assignments = PaladinToolsDB.blessingAssignments or {}
+    local acceptRemote = PaladinToolsDB.acceptRemoteAssignments
 
-    -- Update own entry in syncState
+    -- Update own entry in syncState and acceptRemote
     PT.syncState[name] = {}
     for k, v in pairs(assignments) do
         PT.syncState[name][k] = v
     end
+    PT.syncAcceptRemote[name] = acceptRemote
 
     -- Only send if in a group
     if GetNumGroupMembers() <= 1 then return end
 
-    local msg = self:BuildAssignMessage(name, assignments)
+    local msg = self:BuildAssignMessage(name, assignments, acceptRemote)
     C_ChatInfo.SendAddonMessage(PREFIX, msg, GetChannel())
 end
 
@@ -145,7 +153,7 @@ function BS:HandleAddonMessage(prefix, text, channel, sender)
 
     local senderShort = sender:match("^([^%-]+)")
 
-    local msgType, name, assignments = self:ParseMessage(text)
+    local msgType, name, assignments, acceptRemote = self:ParseMessage(text)
     if not msgType then return end
 
     if msgType == "SYNC" then
@@ -154,6 +162,7 @@ function BS:HandleAddonMessage(prefix, text, channel, sender)
     elseif msgType == "ASSIGN" then
         if senderShort == UnitName("player") then return end
         PT.syncState[name] = assignments
+        PT.syncAcceptRemote[name] = acceptRemote
         self:RefreshUI()
 
     elseif msgType == "OVERRIDE" then
@@ -205,6 +214,7 @@ function BS:CleanSyncState()
     for syncName in pairs(PT.syncState) do
         if not groupNames[syncName] then
             PT.syncState[syncName] = nil
+            PT.syncAcceptRemote[syncName] = nil
         end
     end
 end
@@ -228,6 +238,7 @@ function BS:Init()
         for k, v in pairs(PaladinToolsDB.blessingAssignments) do
             PT.syncState[name][k] = v
         end
+        PT.syncAcceptRemote[name] = PaladinToolsDB.acceptRemoteAssignments
     end
 
     C_Timer.After(2, function()

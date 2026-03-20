@@ -48,19 +48,20 @@ local FAKE_PALADINS = {
         name = "Bubbleboy",
         assignments = { WARRIOR = "salvation", ROGUE = "might", SHAMAN = "kings",
                         PALADIN = "kings" },
-        acceptRemote = true,
+        acceptRemote = false,
         isAssist = false,
     },
     {
         name = "Lightlady",
         assignments = { WARRIOR = "kings", MAGE = "kings", PRIEST = "sanctuary",
                         DRUID = "kings", HUNTER = "kings" },
-        acceptRemote = false,
+        acceptRemote = true,
         isAssist = false,
     },
 }
 
 local fakePaladinsActive = false
+local orig_UnitIsGroupLeader = UnitIsGroupLeader
 
 local mode = nil  -- nil, "raid", or "party"
 local fakeStartTime = 0
@@ -218,7 +219,9 @@ local function ToggleFakePaladins(countStr)
     if fakePaladinsActive then
         for _, pal in ipairs(FAKE_PALADINS) do
             PaladinTools.syncState[pal.name] = nil
+            PaladinTools.syncAcceptRemote[pal.name] = nil
         end
+        UnitIsGroupLeader = orig_UnitIsGroupLeader
         fakePaladinsActive = false
         print("|cffF58CBAPaladinTools|r Fake paladins |cffff0000DISABLED|r")
     else
@@ -228,12 +231,19 @@ local function ToggleFakePaladins(countStr)
             for k, v in pairs(pal.assignments) do
                 PaladinTools.syncState[pal.name][k] = v
             end
+            PaladinTools.syncAcceptRemote[pal.name] = pal.acceptRemote
+        end
+        -- Fake local player as group leader so they can edit unlocked paladins
+        UnitIsGroupLeader = function(unit)
+            if unit == "player" then return true end
+            return orig_UnitIsGroupLeader(unit)
         end
         fakePaladinsActive = true
         print("|cffF58CBAPaladinTools|r Fake paladins |cff00ff00ENABLED|r — " .. count .. " paladins added")
+        print("  You are faked as group leader")
         for i = 1, count do
             local pal = FAKE_PALADINS[i]
-            local status = pal.acceptRemote and "|cff00ff00accepts remote|r" or "|cffff0000locked|r"
+            local status = pal.acceptRemote and "|cff00ff00unlocked|r" or "|cffff0000locked|r"
             local role = pal.isAssist and " (assist)" or ""
             print("  " .. pal.name .. role .. " — " .. status)
         end
