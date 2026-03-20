@@ -6,6 +6,17 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "3.0.0",
+        features = {
+            "Blessing Sync — broadcast and receive blessing assignments across paladins in your group/raid",
+            "Blessings tab rebuilt as paladin-rows × class-columns grid for multi-paladin coordination",
+            "/fakesync and /fakepaladins debug commands for protocol and UI testing",
+        },
+        fixes = {
+            "Fixed frame leak in grid cleanup when rebuilding the Blessings tab",
+        },
+    },
+    {
         version = "2.1.0",
         features = {
             "Righteous Fury button in the center of the spell popup for Prot paladins",

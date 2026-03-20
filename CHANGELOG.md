@@ -1,5 +1,11 @@
 # Changelog
 
+**v3.0.0**
+- New: Blessing Sync — broadcast and receive blessing assignments across paladins in your group/raid
+- New: Blessings tab rebuilt as a paladin-rows × class-columns grid for multi-paladin coordination
+- New: /fakesync and /fakepaladins debug commands for protocol and UI testing
+- Fixed: Frame leak in grid cleanup when rebuilding the Blessings tab
+
 **v2.1.0**
 - New: Righteous Fury button in the center of the spell popup for Prot paladins (requires Improved Righteous Fury talent)
 - Improved: Popup quadrants dynamically space out to accommodate the center RF button

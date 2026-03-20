@@ -1,6 +1,6 @@
 PaladinTools = {}
 PaladinTools.modules = {}
-PaladinTools.version = "2.1.0"
+PaladinTools.version = "3.0.0"
 PaladinTools.initialized = false
 PaladinTools.syncState = {}
 
