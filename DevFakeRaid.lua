@@ -36,6 +36,33 @@ local PARTY_BUFFS = {
     [3] = { elapsed = 0.70 },  -- MAGE: 70% elapsed
 }
 
+local FAKE_PALADINS = {
+    {
+        name = "Holypal",
+        assignments = { WARRIOR = "might", PRIEST = "wisdom", MAGE = "wisdom",
+                        WARLOCK = "wisdom", HUNTER = "might", DRUID = "might" },
+        acceptRemote = true,
+        isAssist = true,
+    },
+    {
+        name = "Bubbleboy",
+        assignments = { WARRIOR = "salvation", ROGUE = "might", SHAMAN = "kings",
+                        PALADIN = "kings" },
+        acceptRemote = false,
+        isAssist = false,
+    },
+    {
+        name = "Lightlady",
+        assignments = { WARRIOR = "kings", MAGE = "kings", PRIEST = "sanctuary",
+                        DRUID = "kings", HUNTER = "kings" },
+        acceptRemote = true,
+        isAssist = false,
+    },
+}
+
+local fakePaladinsActive = false
+local orig_UnitIsGroupLeader = UnitIsGroupLeader
+
 local mode = nil  -- nil, "raid", or "party"
 local fakeStartTime = 0
 
@@ -183,6 +210,80 @@ local function Toggle(newMode)
         end
     end
     Rebuild()
+end
+
+local function ToggleFakePaladins(countStr)
+    local count = tonumber(countStr) or 2
+    count = math.min(count, #FAKE_PALADINS)
+
+    if fakePaladinsActive then
+        for _, pal in ipairs(FAKE_PALADINS) do
+            PaladinTools.syncState[pal.name] = nil
+            PaladinTools.syncAcceptRemote[pal.name] = nil
+        end
+        UnitIsGroupLeader = orig_UnitIsGroupLeader
+        fakePaladinsActive = false
+        print("|cffF58CBAPaladinTools|r Fake paladins |cffff0000DISABLED|r")
+    else
+        for i = 1, count do
+            local pal = FAKE_PALADINS[i]
+            PaladinTools.syncState[pal.name] = {}
+            for k, v in pairs(pal.assignments) do
+                PaladinTools.syncState[pal.name][k] = v
+            end
+            PaladinTools.syncAcceptRemote[pal.name] = pal.acceptRemote
+        end
+        -- Fake local player as group leader so they can edit unlocked paladins
+        UnitIsGroupLeader = function(unit)
+            if unit == "player" then return true end
+            return orig_UnitIsGroupLeader(unit)
+        end
+        fakePaladinsActive = true
+        print("|cffF58CBAPaladinTools|r Fake paladins |cff00ff00ENABLED|r — " .. count .. " paladins added")
+        print("  You are faked as group leader")
+        for i = 1, count do
+            local pal = FAKE_PALADINS[i]
+            local status = pal.acceptRemote and "|cff00ff00unlocked|r" or "|cffff0000locked|r"
+            local role = pal.isAssist and " (assist)" or ""
+            print("  " .. pal.name .. role .. " — " .. status)
+        end
+    end
+
+    local bs = PaladinTools.modules["BlessingSync"]
+    if bs and bs.RefreshUI then bs:RefreshUI() end
+end
+
+SLASH_FAKEPALADINS1 = "/fakepaladins"
+SlashCmdList["FAKEPALADINS"] = function(msg)
+    ToggleFakePaladins(strtrim(msg))
+end
+
+SLASH_FAKESYNC1 = "/fakesync"
+SlashCmdList["FAKESYNC"] = function(msg)
+    msg = strtrim(msg)
+    if msg == "" then
+        print("|cffF58CBAPaladinTools|r /fakesync usage:")
+        print("  /fakesync ASSIGN:Name:CLASS=type,CLASS=type")
+        print("  /fakesync OVERRIDE:Name:CLASS=type,CLASS=type")
+        print("  /fakesync SYNC")
+        return
+    end
+
+    local sender = "FakeSender"
+    local _, name = msg:match("^(%u+):([^:]+)")
+    if name and msg:match("^ASSIGN") then
+        sender = name
+    end
+
+    print("|cffF58CBAPaladinTools|r Injecting fake message: " .. msg)
+    print("  Sender: " .. sender)
+
+    local bs = PaladinTools.modules["BlessingSync"]
+    if bs then
+        bs:HandleAddonMessage("PTools", msg, "RAID", sender)
+    else
+        print("  |cffff0000ERROR: BlessingSync module not loaded|r")
+    end
 end
 
 SLASH_FAKERAID1 = "/fakeraid"

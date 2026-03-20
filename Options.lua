@@ -4,6 +4,7 @@ PT:RegisterModule("Options", OPT)
 
 local optionsFrame = nil
 local optionsLayout = nil
+local blessingsContentFrame = nil
 
 -- Style constants (matches WhatsNew.lua)
 local BG_COLOR = { 0.08, 0.08, 0.12, 0.98 }
@@ -411,66 +412,70 @@ end
 --------------------------------------------------------------------------------
 
 local function BuildBlessingsContent(parent)
-    local y = -8
-
-    y = CreateHeader(parent, "Blessing Assignments", y)
-
-    -- Description
-    local contentWidth = parent:GetWidth() - 24
-    if contentWidth < 100 then contentWidth = 360 end
-    local desc = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    desc:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, y)
-    desc:SetWidth(contentWidth)
-    desc:SetJustifyH("LEFT")
-    desc:SetText("Assign Greater Blessings to each class. "
-        .. "Click the blessing button to cycle through known blessings. "
-        .. "Assignments persist across sessions and are used by the popup casting grid.")
-    desc:SetWordWrap(true)
-    local descHeight = desc:GetStringHeight() or 28
-    y = y - descHeight - 8
+    blessingsContentFrame = parent
 
     local CLASS_ORDER = {
         "DRUID", "HUNTER", "MAGE", "PALADIN", "PRIEST",
         "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR",
     }
 
-    -- Scan which Greater Blessings the player actually knows (spellbook check)
-    local knownGreaters = {}
-    for _, bType in ipairs(PT.BLESSING_CYCLE_ORDER) do
-        local spellData = PT.GREATER_BLESSING_BY_TYPE[bType]
-        if spellData and PT:FindSpellInBook(spellData.name) then
-            tinsert(knownGreaters, bType)
-        end
-    end
-
-    local ROW_HEIGHT = 28
+    local CELL_SIZE = 24
     local ICON_SIZE = 20
+    local NAME_COL_WIDTH = 80
+    local HEADER_ROW_HEIGHT = 28
+    local ROW_HEIGHT = 28
 
-    local classRows = {}
-
-    local function UpdateRowVisual(row, class)
-        local assignedType = PaladinToolsDB.blessingAssignments[class]
-        if assignedType then
-            local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
-            if spellData then
-                local bookID = PT:FindSpellInBook(spellData.name)
-                local spellName, _, icon = GetSpellInfo(bookID or spellData.spellID)
-                row.blessingIcon:SetTexture(icon or "Interface\\ICONS\\INV_Misc_QuestionMark")
-                row.blessingIcon:SetDesaturated(false)
-                row.blessingText:SetText(spellName or spellData.name)
-                row.blessingText:SetTextColor(1, 1, 1)
+    -- Reusable: scan known Greater Blessings
+    local function GetKnownGreaters()
+        local known = {}
+        for _, bType in ipairs(PT.BLESSING_CYCLE_ORDER) do
+            local spellData = PT.GREATER_BLESSING_BY_TYPE[bType]
+            if spellData and PT:FindSpellInBook(spellData.name) then
+                tinsert(known, bType)
             end
-        else
-            row.blessingIcon:SetTexture("Interface\\ICONS\\INV_Misc_QuestionMark")
-            row.blessingIcon:SetDesaturated(true)
-            row.blessingText:SetText("None")
-            row.blessingText:SetTextColor(0.5, 0.5, 0.5)
         end
+        return known
     end
 
-    local function CycleBlessing(class)
+    -- Get blessing icon texture for a blessing type
+    local function GetBlessingIcon(bType)
+        if not bType then return "Interface\\ICONS\\INV_Misc_QuestionMark" end
+        local spellData = PT.GREATER_BLESSING_BY_TYPE[bType]
+        if not spellData then return "Interface\\ICONS\\INV_Misc_QuestionMark" end
+        local bookID = PT:FindSpellInBook(spellData.name)
+        local _, _, icon = GetSpellInfo(bookID or spellData.spellID)
+        return icon or "Interface\\ICONS\\INV_Misc_QuestionMark"
+    end
+
+    -- Check if a blessing type is duplicated for a class across paladins
+    local function IsDuplicate(targetPaladin, class, bType)
+        if not bType then return false end
+        for pName, assignments in pairs(PT.syncState) do
+            if pName ~= targetPaladin and assignments[class] == bType then
+                return true
+            end
+        end
+        return false
+    end
+
+    -- Get assignments for a paladin (local or from syncState)
+    local function GetAssignments(paladinName)
+        local myName = UnitName("player")
+        if paladinName == myName then
+            return PaladinToolsDB.blessingAssignments
+        end
+        return PT.syncState[paladinName] or {}
+    end
+
+    -- Cycle blessing for a paladin/class combo
+    local function CycleBlessing(paladinName, class)
+        local knownGreaters = GetKnownGreaters()
         if #knownGreaters == 0 then return end
-        local current = PaladinToolsDB.blessingAssignments[class]
+
+        local myName = UnitName("player")
+        local isLocal = (paladinName == myName)
+        local assignments = GetAssignments(paladinName)
+        local current = assignments[class]
         local nextType = nil
 
         if not current then
@@ -484,116 +489,286 @@ local function BuildBlessingsContent(parent)
             end
         end
 
-        PaladinToolsDB.blessingAssignments[class] = nextType
-
-        -- Update the popup class grid if it exists
-        local pm = PT.modules["PopupMenu"]
-        if pm then
-            if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
-            if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
-        end
-    end
-
-    for _, class in ipairs(CLASS_ORDER) do
-        local row = CreateFrame("Button", nil, parent)
-        local rowWidth = parent:GetWidth() - 16
-        if rowWidth < 100 then rowWidth = 360 end
-        row:SetSize(rowWidth, ROW_HEIGHT)
-        row:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y)
-
-        -- Class icon
-        local classIcon = row:CreateTexture(nil, "ARTWORK")
-        classIcon:SetSize(ICON_SIZE, ICON_SIZE)
-        classIcon:SetPoint("LEFT", row, "LEFT", 4, 0)
-        classIcon:SetTexture(PT.CLASS_ICON_TEXTURE)
-        local coords = PT.CLASS_ICON_COORDS[class]
-        if coords then
-            classIcon:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
-        end
-
-        -- Class name
-        local className = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        className:SetPoint("LEFT", classIcon, "RIGHT", 6, 0)
-        className:SetWidth(70)
-        className:SetJustifyH("LEFT")
-        local localizedName = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class] or class
-        className:SetText(localizedName)
-
-        -- Blessing icon (clickable area)
-        local blessingIcon = row:CreateTexture(nil, "ARTWORK")
-        blessingIcon:SetSize(ICON_SIZE, ICON_SIZE)
-        blessingIcon:SetPoint("LEFT", row, "LEFT", 100, 0)
-        blessingIcon:SetTexture("Interface\\ICONS\\INV_Misc_QuestionMark")
-        blessingIcon:SetDesaturated(true)
-        row.blessingIcon = blessingIcon
-
-        -- Blessing name
-        local blessingText = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        blessingText:SetPoint("LEFT", blessingIcon, "RIGHT", 6, 0)
-        blessingText:SetWidth(rowWidth - 130)
-        blessingText:SetJustifyH("LEFT")
-        blessingText:SetWordWrap(false)
-        blessingText:SetText("None")
-        blessingText:SetTextColor(0.5, 0.5, 0.5)
-        row.blessingText = blessingText
-
-        -- Highlight on hover
-        local highlight = row:CreateTexture(nil, "HIGHLIGHT")
-        highlight:SetAllPoints()
-        highlight:SetColorTexture(1, 1, 1, 0.05)
-
-        row:SetScript("OnClick", function()
-            CycleBlessing(class)
-            UpdateRowVisual(row, class)
-        end)
-
-        row:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetText(localizedName, 1, 1, 1)
-            local assignedType = PaladinToolsDB.blessingAssignments[class]
-            if assignedType then
-                local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
-                if spellData then
-                    GameTooltip:AddLine("Assigned: " .. spellData.name, 0.2, 1, 0.2)
-                end
-            else
-                GameTooltip:AddLine("No blessing assigned", 0.5, 0.5, 0.5)
+        if isLocal then
+            PaladinToolsDB.blessingAssignments[class] = nextType
+            local pm = PT.modules["PopupMenu"]
+            if pm then
+                if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
+                if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
             end
-            GameTooltip:AddLine("Click to cycle blessing", 0.7, 0.7, 0.7)
-            GameTooltip:Show()
-        end)
-        row:SetScript("OnLeave", function()
-            GameTooltip:Hide()
-        end)
-
-        UpdateRowVisual(row, class)
-        classRows[class] = row
-
-        y = y - ROW_HEIGHT
+            local bs = PT.modules["BlessingSync"]
+            if bs then bs:BroadcastThrottled() end
+        else
+            -- Optimistic local update
+            if PT.syncState[paladinName] then
+                PT.syncState[paladinName][class] = nextType
+            end
+            -- Send override
+            local bs = PT.modules["BlessingSync"]
+            if bs then
+                local overrideAssignments = {}
+                for k, v in pairs(PT.syncState[paladinName] or {}) do
+                    overrideAssignments[k] = v
+                end
+                bs:SendOverride(paladinName, overrideAssignments)
+            end
+        end
     end
 
-    -- Clear All button
-    y = y - 8
+    -- Clear blessing for a paladin/class combo
+    local function ClearBlessing(paladinName, class)
+        local myName = UnitName("player")
+        local isLocal = (paladinName == myName)
+
+        if isLocal then
+            PaladinToolsDB.blessingAssignments[class] = nil
+            local pm = PT.modules["PopupMenu"]
+            if pm then
+                if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
+                if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
+            end
+            local bs = PT.modules["BlessingSync"]
+            if bs then bs:BroadcastThrottled() end
+        else
+            if PT.syncState[paladinName] then
+                PT.syncState[paladinName][class] = nil
+            end
+            local bs = PT.modules["BlessingSync"]
+            if bs then
+                local overrideAssignments = {}
+                for k, v in pairs(PT.syncState[paladinName] or {}) do
+                    overrideAssignments[k] = v
+                end
+                bs:SendOverride(paladinName, overrideAssignments)
+            end
+        end
+    end
+
+    -- Pool of UI elements to clean up on rebuild
+    local gridElements = {}
+
+    local function CleanupGrid()
+        for _, elem in ipairs(gridElements) do
+            elem:Hide()
+        end
+        wipe(gridElements)
+    end
+
+    local function TrackElement(elem)
+        tinsert(gridElements, elem)
+        return elem
+    end
+
+    -- Static UI: opt-in checkbox (created once)
+    local staticY = -8
+    local optInCB = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+    optInCB:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, staticY)
+    local cbText = optInCB.text or (optInCB.GetName and optInCB:GetName() and _G[optInCB:GetName() .. "Text"])
+    if cbText then
+        cbText:SetText("Allow others to set my blessings")
+        cbText:SetFontObject("GameFontHighlight")
+    else
+        local text = optInCB:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        text:SetPoint("LEFT", optInCB, "RIGHT", 4, 0)
+        text:SetText("Allow others to set my blessings")
+    end
+    optInCB:SetChecked(PaladinToolsDB.acceptRemoteAssignments)
+    optInCB:SetScript("OnClick", function(self)
+        PaladinToolsDB.acceptRemoteAssignments = not not self:GetChecked()
+        local bsync = PT.modules["BlessingSync"]
+        if bsync then bsync:BroadcastThrottled() end
+    end)
+    staticY = staticY - 28
+
+    -- Static UI: header separator (created once)
+    local headerLine = parent:CreateTexture(nil, "ARTWORK")
+    headerLine:SetHeight(1)
+    headerLine:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, staticY - 2)
+    headerLine:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -8, staticY - 2)
+    headerLine:SetColorTexture(ACCENT_COLOR[1], ACCENT_COLOR[2], ACCENT_COLOR[3], 0.4)
+
+    -- Y offset where the dynamic grid starts
+    local GRID_START_Y = staticY - 6
+
+    -- Static UI: Clear All button (created once, repositioned on rebuild)
     local clearBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     clearBtn:SetSize(100, 22)
-    clearBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, y)
     clearBtn:SetText("Clear All")
     clearBtn:SetNormalFontObject("GameFontNormalSmall")
     clearBtn:SetScript("OnClick", function()
         wipe(PaladinToolsDB.blessingAssignments)
-        for class, row in pairs(classRows) do
-            UpdateRowVisual(row, class)
-        end
         local pm = PT.modules["PopupMenu"]
         if pm then
             if pm.UpdateClassGridAttributes then pm:UpdateClassGridAttributes() end
             if pm.UpdateClassGridVisuals then pm:UpdateClassGridVisuals() end
         end
+        local bsync = PT.modules["BlessingSync"]
+        if bsync then bsync:BroadcastThrottled() end
+        parent:RebuildGrid()
     end)
 
-    y = y - 30
+    function parent:RebuildGrid()
+        CleanupGrid()
 
-    parent:SetHeight(math.abs(y) + 8)
+        -- Sync checkbox state
+        optInCB:SetChecked(PaladinToolsDB.acceptRemoteAssignments)
+
+        local y = GRID_START_Y
+        local myName = UnitName("player")
+
+        -- Column headers: blank space for name column, then class icons
+        local headerFrame = TrackElement(CreateFrame("Frame", nil, parent))
+        headerFrame:SetSize(NAME_COL_WIDTH + (#CLASS_ORDER * CELL_SIZE) + 24, HEADER_ROW_HEIGHT)
+        headerFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y)
+
+        for ci, class in ipairs(CLASS_ORDER) do
+            local xOff = NAME_COL_WIDTH + ((ci - 1) * CELL_SIZE) + (CELL_SIZE - ICON_SIZE) / 2
+            local classIcon = TrackElement(headerFrame:CreateTexture(nil, "ARTWORK"))
+            classIcon:SetSize(ICON_SIZE, ICON_SIZE)
+            classIcon:SetPoint("TOPLEFT", headerFrame, "TOPLEFT", xOff, -(HEADER_ROW_HEIGHT - ICON_SIZE) / 2)
+            classIcon:SetTexture(PT.CLASS_ICON_TEXTURE)
+            local coords = PT.CLASS_ICON_COORDS[class]
+            if coords then
+                classIcon:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
+            end
+        end
+
+        y = y - HEADER_ROW_HEIGHT
+
+        -- Build sorted paladin list: local first, then others
+        local paladinOrder = {}
+        if PT.syncState[myName] then
+            tinsert(paladinOrder, myName)
+        end
+        for pName in pairs(PT.syncState) do
+            if pName ~= myName then
+                tinsert(paladinOrder, pName)
+            end
+        end
+        -- If somehow we're not in syncState, still show our row
+        if #paladinOrder == 0 or paladinOrder[1] ~= myName then
+            tinsert(paladinOrder, 1, myName)
+        end
+
+        local bs = PT.modules["BlessingSync"]
+        local hasLeaderPerm = bs and bs:HasLeaderPermission()
+
+        -- Build rows
+        for _, paladinName in ipairs(paladinOrder) do
+            local isLocal = (paladinName == myName)
+            local targetAcceptsRemote = PT.syncAcceptRemote[paladinName]
+            local canEdit = isLocal or (hasLeaderPerm and targetAcceptsRemote)
+            local assignments = GetAssignments(paladinName)
+
+            local rowFrame = TrackElement(CreateFrame("Frame", nil, parent))
+            rowFrame:SetSize(NAME_COL_WIDTH + (#CLASS_ORDER * CELL_SIZE) + 24, ROW_HEIGHT)
+            rowFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y)
+
+            -- Paladin name label
+            local nameLabel = TrackElement(rowFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
+            nameLabel:SetPoint("LEFT", rowFrame, "LEFT", 2, 0)
+            nameLabel:SetWidth(NAME_COL_WIDTH - 4)
+            nameLabel:SetJustifyH("LEFT")
+            nameLabel:SetWordWrap(false)
+            local lockTex = "|TInterface\\LFGFRAME\\UI-LFG-ICON-LOCK:14|t"
+            local displayName
+            if isLocal then
+                displayName = "|cffF58CBA" .. paladinName .. " (You)|r"
+            elseif not canEdit then
+                displayName = lockTex .. " |cffF58CBA" .. paladinName .. "|r"
+            else
+                displayName = "|cffF58CBA" .. paladinName .. "|r"
+            end
+            nameLabel:SetText(displayName)
+
+            -- One cell per class
+            for ci, class in ipairs(CLASS_ORDER) do
+                local xOff = NAME_COL_WIDTH + ((ci - 1) * CELL_SIZE)
+                local cellBtn = TrackElement(CreateFrame("Button", nil, rowFrame))
+                cellBtn:SetSize(CELL_SIZE, CELL_SIZE)
+                cellBtn:SetPoint("TOPLEFT", rowFrame, "TOPLEFT", xOff, -(ROW_HEIGHT - CELL_SIZE) / 2)
+                cellBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+
+                -- Blessing icon
+                local bIcon = TrackElement(cellBtn:CreateTexture(nil, "ARTWORK"))
+                bIcon:SetSize(ICON_SIZE, ICON_SIZE)
+                bIcon:SetPoint("CENTER")
+
+                local assignedType = assignments[class]
+                bIcon:SetTexture(GetBlessingIcon(assignedType))
+                if assignedType then
+                    bIcon:SetDesaturated(false)
+                else
+                    bIcon:SetDesaturated(true)
+                end
+
+                -- Duplicate detection: amber overlay
+                if assignedType and IsDuplicate(paladinName, class, assignedType) then
+                    local amber = TrackElement(cellBtn:CreateTexture(nil, "OVERLAY"))
+                    amber:SetAllPoints()
+                    amber:SetColorTexture(1, 0.75, 0, 0.3)
+                end
+
+                -- Highlight on hover
+                local highlight = TrackElement(cellBtn:CreateTexture(nil, "HIGHLIGHT"))
+                highlight:SetAllPoints()
+                highlight:SetColorTexture(1, 1, 1, 0.1)
+
+                -- Tooltip
+                local localizedName = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class] or class
+                cellBtn:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    GameTooltip:SetText(localizedName, 1, 1, 1)
+                    if assignedType then
+                        local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
+                        if spellData then
+                            GameTooltip:AddLine("Assigned: " .. spellData.name, 0.2, 1, 0.2)
+                        end
+                        if IsDuplicate(paladinName, class, assignedType) then
+                            GameTooltip:AddLine("Duplicate assignment!", 1, 0.75, 0)
+                        end
+                    else
+                        GameTooltip:AddLine("No blessing assigned", 0.5, 0.5, 0.5)
+                    end
+                    if canEdit then
+                        GameTooltip:AddLine("Left-click: cycle | Right-click: clear", 0.7, 0.7, 0.7)
+                    end
+                    GameTooltip:Show()
+                end)
+                cellBtn:SetScript("OnLeave", function()
+                    GameTooltip:Hide()
+                end)
+
+                -- Click handler
+                if canEdit then
+                    cellBtn:SetScript("OnClick", function(_, click)
+                        if click == "RightButton" then
+                            ClearBlessing(paladinName, class)
+                        else
+                            CycleBlessing(paladinName, class)
+                        end
+                        -- Rebuild to reflect changes
+                        parent:RebuildGrid()
+                    end)
+                end
+            end
+
+            y = y - ROW_HEIGHT
+        end
+
+        -- Reposition Clear All button
+        y = y - 8
+        clearBtn:ClearAllPoints()
+        clearBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, y)
+        clearBtn:Show()
+
+        y = y - 30
+
+        parent:SetHeight(math.abs(y) + 8)
+    end
+
+    -- Initial build
+    parent:RebuildGrid()
 end
 
 local categoryDefs = {
@@ -779,6 +954,12 @@ end
 function OPT:Hide()
     if optionsFrame then
         optionsFrame:Hide()
+    end
+end
+
+function OPT:RefreshBlessings()
+    if blessingsContentFrame and blessingsContentFrame.RebuildGrid then
+        blessingsContentFrame:RebuildGrid()
     end
 end
 
