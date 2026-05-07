@@ -632,12 +632,19 @@ function PM:BuildButtons()
             local normalId = FindSpellInBook(spell.name)
             local greater = greaterByType[spell.type]
             local greaterId = greater and FindSpellInBook(greater.name)
-            if normalId or greaterId then
-                tinsert(blessingSpells, {
-                    spellID        = greaterId or normalId,
-                    normalSpellID  = normalId,
-                    greaterSpellID = greaterId,
-                })
+            if PaladinToolsDB.popupReleaseMode then
+                -- Release mode: single click, Greater wins when known
+                local id = greaterId or normalId
+                if id then tinsert(blessingSpells, { spellID = id }) end
+            else
+                -- Toggle mode: left-click Normal, right-click Greater
+                if normalId or greaterId then
+                    tinsert(blessingSpells, {
+                        spellID        = greaterId or normalId,
+                        normalSpellID  = normalId,
+                        greaterSpellID = greaterId,
+                    })
+                end
             end
         end
     end
