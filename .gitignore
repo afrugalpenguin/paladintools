@@ -29,3 +29,4 @@ nul
 # Packaged releases
 *.zip
 *.tar.gz
+.worktrees/
