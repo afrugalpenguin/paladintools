@@ -1,5 +1,8 @@
 # Changelog
 
+**v3.1.1**
+- Fixed: Dual-click blessing buttons (left = Normal, right = Greater) now only active when Release Mode is off; release mode restores original single-click behavior
+
 **v3.1.0**
 - New: Blessing type buttons in the popup now support left-click (normal blessing) and right-click (greater blessing) when both are known
 

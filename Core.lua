@@ -1,6 +1,6 @@
 PaladinTools = {}
 PaladinTools.modules = {}
-PaladinTools.version = "3.1.0"
+PaladinTools.version = "3.1.1"
 PaladinTools.initialized = false
 PaladinTools.syncState = {}
 PaladinTools.syncAcceptRemote = {}

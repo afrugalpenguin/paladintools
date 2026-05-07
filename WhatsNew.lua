@@ -6,6 +6,13 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "3.1.1",
+        features = {},
+        fixes = {
+            "Dual-click blessing buttons only active when Release Mode is off; release mode uses original single-click behavior",
+        },
+    },
+    {
         version = "3.1.0",
         features = {
             "Blessing buttons now support left-click (normal) and right-click (greater) when both are known",
