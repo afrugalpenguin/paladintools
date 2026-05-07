@@ -187,9 +187,16 @@ local function CreateSpellButton(spell, prefix, index)
     local btn = CreateFrame("Button", "PaladinTools" .. prefix .. "Btn" .. index, popup, "SecureActionButtonTemplate")
     btn:SetSize(btnSize, btnSize)
 
-    btn:SetAttribute("type", "spell")
     local spellName, _, icon = GetSpellInfo(spell.spellID)
-    btn:SetAttribute("spell", spellName)
+    if spell.normalSpellID and spell.greaterSpellID then
+        local normalName  = GetSpellInfo(spell.normalSpellID)
+        local greaterName = GetSpellInfo(spell.greaterSpellID)
+        btn:SetAttribute("type1",  "spell"); btn:SetAttribute("spell1", normalName)
+        btn:SetAttribute("type2",  "spell"); btn:SetAttribute("spell2", greaterName)
+    else
+        btn:SetAttribute("type",  "spell")
+        btn:SetAttribute("spell", spellName)
+    end
     btn:RegisterForClicks("AnyUp", "AnyDown")
 
     -- Clear any template-injected normal texture
@@ -229,6 +236,10 @@ local function CreateSpellButton(spell, prefix, index)
     btn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetSpellByID(spell.spellID)
+        if spell.normalSpellID and spell.greaterSpellID then
+            local normalName = GetSpellInfo(spell.normalSpellID)
+            GameTooltip:AddLine("Left-click: " .. (normalName or ""), 1, 1, 1)
+        end
         GameTooltip:Show()
     end)
     btn:SetScript("OnLeave", function()
@@ -236,9 +247,11 @@ local function CreateSpellButton(spell, prefix, index)
     end)
 
     -- Release-to-cast: secure snippet tracks hovered spell on toggleBtn
+    -- Prefer spell2 (greater) when dual-cast button, fall back to spell1/spell
     SecureHandlerWrapScript(btn, "OnEnter", toggleBtn, [[
         if owner:GetAttribute("releasemode") then
-            owner:SetAttribute("ptspell", self:GetAttribute("spell"))
+            local sp = self:GetAttribute("spell2") or self:GetAttribute("spell1") or self:GetAttribute("spell")
+            owner:SetAttribute("ptspell", sp)
         end
     ]])
     SecureHandlerWrapScript(btn, "OnLeave", toggleBtn, [[
@@ -608,7 +621,6 @@ function PM:BuildButtons()
     local cats = PaladinToolsDB.popupCategories
     local playerFaction = UnitFactionGroup("player")
 
-    -- Blessings (greater replaces lesser when known)
     local greaterByType = {}
     for _, spell in ipairs(PT.GREATER_BLESSINGS) do
         greaterByType[spell.type] = spell
@@ -617,13 +629,15 @@ function PM:BuildButtons()
     local blessingSpells = {}
     if cats.blessings then
         for _, spell in ipairs(PT.BLESSINGS) do
+            local normalId = FindSpellInBook(spell.name)
             local greater = greaterByType[spell.type]
             local greaterId = greater and FindSpellInBook(greater.name)
-            if greaterId then
-                tinsert(blessingSpells, { spellID = greaterId })
-            else
-                local id = FindSpellInBook(spell.name)
-                if id then tinsert(blessingSpells, { spellID = id }) end
+            if normalId or greaterId then
+                tinsert(blessingSpells, {
+                    spellID        = greaterId or normalId,
+                    normalSpellID  = normalId,
+                    greaterSpellID = greaterId,
+                })
             end
         end
     end
