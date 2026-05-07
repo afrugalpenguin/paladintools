@@ -6,6 +6,13 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "3.1.0",
+        features = {
+            "Blessing buttons now support left-click (normal) and right-click (greater) when both are known",
+        },
+        fixes = {},
+    },
+    {
         version = "3.0.0",
         features = {
             "Blessing Sync — broadcast and receive blessing assignments across paladins in your group/raid",

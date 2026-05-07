@@ -1,5 +1,8 @@
 # Changelog
 
+**v3.1.0**
+- New: Blessing type buttons in the popup now support left-click (normal blessing) and right-click (greater blessing) when both are known
+
 **v3.0.0**
 - New: Blessing Sync — broadcast and receive blessing assignments across paladins in your group/raid
 - New: Blessings tab rebuilt as a paladin-rows × class-columns grid for multi-paladin coordination
