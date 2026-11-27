@@ -3,6 +3,7 @@
 Before each release:
 
 - [ ] Update `CHANGELOG.md`
+- [ ] If WoW Forever has patched, bump `## Interface:` in `PaladinTools_Camelot.toc` (currently `16001`)
 - [ ] Commit with message: `chore(release): bump version to X.Y.Z`
 - [ ] Create and push tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
 

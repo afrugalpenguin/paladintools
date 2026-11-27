@@ -42,6 +42,7 @@ PT.SEALS = {
     { spellID = 31895, name = "Seal of Justice" },
     { spellID = 31892, name = "Seal of Blood",          faction = "Horde" },
     { spellID = 31801, name = "Seal of Vengeance",      faction = "Alliance" },
+    { spellID = 1311649, name = "Seal of Fury" },           -- WoW Forever only
 }
 
 -- Righteous Fury (self-buff, shown for Prot spec)

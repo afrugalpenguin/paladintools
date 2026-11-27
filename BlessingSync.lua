@@ -5,10 +5,21 @@ PT:RegisterModule("BlessingSync", BS)
 local PREFIX = "PTools"
 local THROTTLE_INTERVAL = 0.5
 local pendingSend = false
+local resendAfterCombat = false
 
 -- Channel helper: RAID if in raid, PARTY otherwise
 local function GetChannel()
     return IsInRaid() and "RAID" or "PARTY"
+end
+
+-- Forever refuses addon messages during a lockdown (combat in instances); TBC returns a boolean
+local function Send(msg)
+    local result = C_ChatInfo.SendAddonMessage(PREFIX, msg, GetChannel())
+    BS.lastSendResult = result
+    local results = Enum and Enum.SendAddonMessageResult
+    if results and result == results.AddOnMessageLockdown then
+        resendAfterCombat = true
+    end
 end
 
 -- Serialize a paladin's assignments table to wire format
@@ -90,8 +101,7 @@ function BS:BroadcastAssignments()
     -- Only send if in a group
     if GetNumGroupMembers() <= 1 then return end
 
-    local msg = self:BuildAssignMessage(name, assignments, acceptRemote)
-    C_ChatInfo.SendAddonMessage(PREFIX, msg, GetChannel())
+    Send(self:BuildAssignMessage(name, assignments, acceptRemote))
 end
 
 -- Send with throttle (coalesce rapid edits)
@@ -107,14 +117,13 @@ end
 -- Request all paladins to re-broadcast
 function BS:RequestSync()
     if GetNumGroupMembers() <= 1 then return end
-    C_ChatInfo.SendAddonMessage(PREFIX, "SYNC", GetChannel())
+    Send(self:BuildSyncMessage())
 end
 
 -- Send override to a target paladin
 function BS:SendOverride(targetName, assignments)
     if GetNumGroupMembers() <= 1 then return end
-    local msg = self:BuildOverrideMessage(targetName, assignments)
-    C_ChatInfo.SendAddonMessage(PREFIX, msg, GetChannel())
+    Send(self:BuildOverrideMessage(targetName, assignments))
 end
 
 -- Check if the local player has leader/assist permissions
@@ -228,10 +237,17 @@ function BS:OnEvent(event, ...)
         self:CleanSyncState()
         self:BroadcastThrottled()
         self:RefreshUI()
+
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        if resendAfterCombat then
+            resendAfterCombat = false
+            self:BroadcastAssignments()
+        end
     end
 end
 
 function BS:Init()
+    PT:RegisterEvents("PLAYER_REGEN_ENABLED")
     local name = UnitName("player")
     if name then
         PT.syncState[name] = {}

@@ -11,3 +11,6 @@ ignore:
   - .pkgmeta
   - .github
   - "*.png"
+  - tests
+  - .busted
+  - .luacheckrc

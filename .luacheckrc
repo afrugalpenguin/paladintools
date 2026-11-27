@@ -10,6 +10,7 @@ globals = {
     "BINDING_HEADER_PALADINTOOLS",
     "BINDING_NAME_PALADINTOOLS_POPUP",
     "PaladinTools_TogglePopup",
+    "SLASH_PALADINTOOLSAPI1",
 }
 
 read_globals = {
@@ -55,6 +56,18 @@ read_globals = {
 
     -- WoW Container API
     "C_Container",
+
+    -- WoW Forever (retail-based) APIs
+    "C_ChatInfo",
+    "C_Item",
+    "C_Spell",
+    "C_SpellBook",
+    "C_UnitAuras",
+    "Enum",
+    "GetBuildInfo",
+    "IsInInstance",
+    "IsPlayerSpell",
+    "issecretvalue",
 
     -- WoW Chat API
     "SendChatMessage",
@@ -110,6 +123,16 @@ ignore = {
     "431",  -- Shadowing upvalue
     "432",  -- Shadowing upvalue argument
     "611",  -- Line contains only whitespace
+}
+
+-- The Forever compatibility layer recreates TBC globals the client lacks
+files["Compat_Forever.lua"] = {
+    globals = { "GetSpellInfo", "GetItemIcon", "SendChatMessage" },
+}
+
+files["tests/**/*.lua"] = {
+    std = "+busted",
+    globals = { "_G", "PaladinToolsDB", "StubObject" },
 }
 
 exclude_files = {

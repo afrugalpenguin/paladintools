@@ -45,6 +45,17 @@ function TH:MatchKeyword(msg)
     return nil
 end
 
+-- Forever hides whisper text behind secret values while chat messaging is locked down
+local function IsSecret(v)
+    return issecretvalue ~= nil and issecretvalue(v)
+end
+
+-- Whispers can't be sent during a chat messaging lockdown (Forever); nil-safe on TBC
+local function CanWhisper()
+    local lockdown = C_ChatInfo and C_ChatInfo.InChatMessagingLockdown
+    return not (lockdown and lockdown())
+end
+
 local function NotifyBlessingManager()
     local pm = PT.modules["PopupMenu"]
     if pm and pm.UpdateClassGridVisuals then
@@ -66,7 +77,7 @@ function TH:AddToQueue(name, request)
     self:UpdateQueueDisplay()
     NotifyBlessingManager()
 
-    if PaladinToolsDB.autoReply then
+    if PaladinToolsDB.autoReply and CanWhisper() then
         local position = #queue
         SendChatMessage("You're queued for " .. request .. ". " .. (position - 1) .. " ahead of you.", "WHISPER", nil, name)
     end
@@ -79,7 +90,7 @@ end
 
 function TH:RemoveFromQueue(index)
     local entry = tremove(queue, index)
-    if entry and PaladinToolsDB.autoReply then
+    if entry and PaladinToolsDB.autoReply and CanWhisper() then
         SendChatMessage("Blessed!", "WHISPER", nil, entry.name)
     end
     self:UpdateQueueDisplay()
@@ -243,6 +254,7 @@ end
 function TH:OnEvent(event, ...)
     if event == "CHAT_MSG_WHISPER" then
         local msg, sender = ...
+        if IsSecret(msg) or IsSecret(sender) then return end
         local request = self:MatchKeyword(msg)
         if request then
             local name = strsplit("-", sender)
@@ -251,6 +263,7 @@ function TH:OnEvent(event, ...)
     elseif (event == "CHAT_MSG_PARTY" or event == "CHAT_MSG_PARTY_LEADER") then
         if PaladinToolsDB.listenPartyChat then
             local msg, sender = ...
+            if IsSecret(msg) or IsSecret(sender) then return end
             local request = self:MatchKeyword(msg)
             if request then
                 local name = strsplit("-", sender)
