@@ -295,7 +295,7 @@ local function ScanKnownGreaters()
     end
 end
 
-local function ScanRoster()
+function PM:ScanRoster()
     wipe(classRoster)
     local groupSize = GetNumGroupMembers()
     if groupSize == 0 then
@@ -325,8 +325,21 @@ local function ScanRoster()
     end
 end
 
-local function ScanBlessings()
-    wipe(classBlessings)
+-- Is the assigned blessing type on this unit? Returns found, duration, expirationTime.
+-- Returns nil when the unit's auras cannot be read right now (the Forever build overrides this).
+function PM:ReadAssignedBlessing(unit, blessingNames, assignedType)
+    for i = 1, 40 do
+        local name, _, _, _, duration, expirationTime = UnitBuff(unit, i)
+        if not name then return false end
+        if blessingNames[name] == assignedType then
+            return true, duration, expirationTime
+        end
+    end
+    return false
+end
+
+-- If any unit cannot be read (secret auras on Forever), keep the previous scan
+function PM:ScanBlessings()
     local blessingNames = {}
     for _, spell in ipairs(PT.BLESSINGS) do
         blessingNames[spell.name] = spell.type
@@ -335,6 +348,7 @@ local function ScanBlessings()
         blessingNames[spell.name] = spell.type
     end
 
+    local scan = {}
     for class, units in pairs(classRoster) do
         local total = #units
         local buffed = 0
@@ -343,31 +357,39 @@ local function ScanBlessings()
         local assignedType = PaladinToolsDB.blessingAssignments[class]
 
         for _, unit in ipairs(units) do
-            if not UnitIsDeadOrGhost(unit) then
-                for i = 1, 40 do
-                    local name, _, _, _, duration, expirationTime = UnitBuff(unit, i)
-                    if not name then break end
-                    local bType = blessingNames[name]
-                    if bType and bType == assignedType then
-                        buffed = buffed + 1
-                        if expirationTime and (not shortestExpires or expirationTime < shortestExpires) then
-                            shortestExpires = expirationTime
-                            shortestDuration = duration
-                        end
-                        break
+            if assignedType and not UnitIsDeadOrGhost(unit) then
+                local found, duration, expirationTime = self:ReadAssignedBlessing(unit, blessingNames, assignedType)
+                if found == nil then return end
+                if found then
+                    buffed = buffed + 1
+                    if expirationTime and (not shortestExpires or expirationTime < shortestExpires) then
+                        shortestExpires = expirationTime
+                        shortestDuration = duration
                     end
                 end
             end
         end
 
-        classBlessings[class] = {
+        scan[class] = {
             buffed = buffed,
             total = total,
             expires = shortestExpires,
             duration = shortestDuration or 600,
         }
     end
+
+    wipe(classBlessings)
+    for class, info in pairs(scan) do
+        classBlessings[class] = info
+    end
 end
+
+function PM:GetClassBlessing(class)
+    return classBlessings[class]
+end
+
+local function ScanRoster() PM:ScanRoster() end
+local function ScanBlessings() PM:ScanBlessings() end
 
 local classGridButtons = {}
 local CLASS_ICON_SIZE = 16
@@ -438,7 +460,7 @@ local function CreateClassGridRow(class)
         if assignedType then
             local spellData = PT.GREATER_BLESSING_BY_TYPE[assignedType]
             if spellData then
-                GameTooltip:SetSpellByID(spellData.spellID)
+                GameTooltip:SetSpellByID(FindSpellInBook(spellData.name) or spellData.spellID)
             end
         else
             GameTooltip:SetText("No blessing assigned")

@@ -1,6 +1,6 @@
 # PaladinTools
 
-A paladin utility addon for World of Warcraft TBC Anniversary Classic. Provides quick-access spell menus, buff tracking, reagent monitoring, and whisper-based buff request handling.
+A paladin utility addon for World of Warcraft TBC Anniversary Classic and WoW Forever. Provides quick-access spell menus, buff tracking, reagent monitoring, and whisper-based buff request handling.
 
 ## Features
 
