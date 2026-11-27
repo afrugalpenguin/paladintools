@@ -8,8 +8,16 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: true
+
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   release:
+    needs: tests
     runs-on: ubuntu-latest
 
     env:
@@ -18,9 +26,14 @@ jobs:
 
     steps:
       - name: Clone project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
+      # One zip carries both TOCs: PaladinTools.toc (TBC Anniversary, 20505) and
+      # PaladinTools_Camelot.toc (WoW Forever, 16001). The packager reads both and tags the
+      # CurseForge file with both game versions.
       - name: Package and release
         uses: BigWigsMods/packager@v2
+        with:
+          args: -p 1479279
