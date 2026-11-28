@@ -7,6 +7,12 @@ local THROTTLE_INTERVAL = 0.5
 local pendingSend = false
 local resendAfterCombat = false
 
+-- Classes a blessing can be assigned to; anything else on the wire is dropped
+local VALID_CLASSES = {
+    WARRIOR = true, MAGE = true, ROGUE = true, DRUID = true, HUNTER = true,
+    SHAMAN = true, PRIEST = true, WARLOCK = true, PALADIN = true,
+}
+
 -- Channel helper: RAID if in raid, PARTY otherwise
 local function GetChannel()
     return IsInRaid() and "RAID" or "PARTY"
@@ -42,7 +48,7 @@ function BS:ParseAssignments(str)
     if not str or str == "" then return assignments end
     for pair in str:gmatch("[^,]+") do
         local class, bType = pair:match("^(%u+)=(%a+)$")
-        if class and bType then
+        if VALID_CLASSES[class] and PT.GREATER_BLESSING_BY_TYPE[bType] then
             assignments[class] = bType
         end
     end
@@ -170,6 +176,7 @@ function BS:HandleAddonMessage(prefix, text, channel, sender)
 
     elseif msgType == "ASSIGN" then
         if senderShort == UnitName("player") then return end
+        if name ~= senderShort then return end
         PT.syncState[name] = assignments
         PT.syncAcceptRemote[name] = acceptRemote
         self:RefreshUI()
@@ -180,8 +187,11 @@ function BS:HandleAddonMessage(prefix, text, channel, sender)
         if not self:SenderHasPermission(senderShort) then return end
 
         wipe(PaladinToolsDB.blessingAssignments)
+        -- Forever removed some blessings; never take one this paladin can't cast
         for k, v in pairs(assignments) do
-            PaladinToolsDB.blessingAssignments[k] = v
+            if PT:FindSpellInBook(PT.GREATER_BLESSING_BY_TYPE[v].name) then
+                PaladinToolsDB.blessingAssignments[k] = v
+            end
         end
 
         self:BroadcastAssignments()
