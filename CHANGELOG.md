@@ -1,5 +1,11 @@
 # Changelog
 
+**v3.2.0**
+- New: WoW Forever support — one download runs on both WoW Forever and TBC Anniversary; WoW loads the right build
+- New: On Forever, the popup offers Seal of Fury and leaves out spells Forever removed; Greater Blessings cover Kings, Might and Wisdom
+- New: /ptapi (Forever only) probes the game API for bug reports
+- Note: On Forever, blessing grid counts and timers go blank when the game hides buffs (in combat, some instances), and the Buff Helper pauses while whisper text is hidden
+
 **v3.1.1**
 - Fixed: Dual-click blessing buttons (left = Normal, right = Greater) now only active when Release Mode is off; release mode restores original single-click behavior
 

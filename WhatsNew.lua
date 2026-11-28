@@ -6,6 +6,15 @@ local whatsNewFrame = nil
 
 local changelog = {
     {
+        version = "3.2.0",
+        features = {
+            "WoW Forever support: one download runs on both WoW Forever and TBC Anniversary",
+            "On Forever, the popup offers Seal of Fury and leaves out spells Forever removed",
+            "/ptapi (Forever only) probes the game API for bug reports",
+        },
+        fixes = {},
+    },
+    {
         version = "3.1.1",
         features = {},
         fixes = {
