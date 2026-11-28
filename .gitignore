@@ -30,3 +30,6 @@ nul
 *.zip
 *.tar.gz
 .worktrees/
+
+# CurseForge project description (paste into the CF page by hand)
+CURSEFORGE.md
